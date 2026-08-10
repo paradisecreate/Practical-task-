@@ -1,0 +1,12 @@
+# Practical-task
+
+Structure
+-devops-project/
+  terraform/
+  ansible/
+  app/
+  docker/
+  jenkins/
+  docs/
+  scripts/
+  nginx/
