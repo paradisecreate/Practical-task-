@@ -1,0 +1,59 @@
+---
+- name: Configure Practical Task EC2
+  hosts: localhost
+  become: true
+
+  vars:
+    practical_task_repo: "https://github.com/paradisecreate/Practical-task-.git"
+
+  tasks:
+    - name: Update Amazon Linux packages
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+        update_cache: true
+
+    - name: Install required packages
+      ansible.builtin.yum:
+        name:
+          - git
+          - unzip
+        state: present
+
+    - name: Create project directory
+      ansible.builtin.file:
+        path: /opt/practical-task
+        state: directory
+        mode: "0755"
+
+    - name: Clone Practical Task repository
+      ansible.builtin.git:
+        repo: "{{ practical_task_repo }}"
+        dest: /opt/practical-task
+        version: main
+        force: true
+
+    - name: Check website directory
+      ansible.builtin.stat:
+        path: /opt/practical-task/website
+      register: website_directory
+
+    - name: Verify website directory exists
+      ansible.builtin.assert:
+        that:
+          - website_directory.stat.exists
+          - website_directory.stat.isdir
+        fail_msg: "The website directory was not found."
+        success_msg: "Website directory found successfully."
+
+    - name: Check index.html
+      ansible.builtin.stat:
+        path: /opt/practical-task/website/index.html
+      register: index_file
+
+    - name: Verify index.html exists
+      ansible.builtin.assert:
+        that:
+          - index_file.stat.exists
+        fail_msg: "website/index.html was not found."
+        success_msg: "website/index.html found successfully."
