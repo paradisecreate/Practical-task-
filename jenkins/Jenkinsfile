@@ -25,6 +25,8 @@ pipeline {
         // is uniquely identifiable (e.g. ...:12). BUILD_NUMBER is built-in.
         IMAGE_TAG    = "${BUILD_NUMBER}"
         CONTAINER    = 'practical-task-website'  // name of the running container
+        // S3 bucket that hosts the website's static files (second deploy target).
+        S3_BUCKET    = 'devops-bucket-team2'
     }
 
     stages {
@@ -100,7 +102,19 @@ pipeline {
             }
         }
 
-        // ---- 5. SMOKE TEST -----------------------------------------------
+        // ---- 5. DEPLOY TO S3 ---------------------------------------------
+        // S3 hosts the SAME website as plain static files (no Docker here).
+        // 'aws s3 sync' uploads only what changed; --delete removes files
+        // from the bucket that no longer exist in the repo (keeps them in sync).
+        // The EC2's IAM role needs s3:PutObject/DeleteObject on this bucket.
+        stage('Deploy to S3') {
+            steps {
+                echo "Syncing website/ to s3://${S3_BUCKET}..."
+                sh 'aws s3 sync website/ s3://$S3_BUCKET/ --delete --region $AWS_REGION'
+            }
+        }
+
+        // ---- 6. SMOKE TEST -----------------------------------------------
         // Prove the site actually responds. -f makes curl FAIL on errors,
         // so a non-200 response fails the whole build (loud, not silent).
         stage('Smoke test') {
