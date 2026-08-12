@@ -1,5 +1,7 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "website" {
-  bucket = "your-website-bucket"
+  bucket = "your-website-bucket-${data.aws_caller_identity.current.account_id}"
 
   tags = {
     Name        = "your-website-bucket"
