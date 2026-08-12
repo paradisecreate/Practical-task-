@@ -1,6 +1,6 @@
 pipelineJob('practical-task-pipeline') {
     triggers {
-        githubPush()
+        scm('H/2 * * * *')
     }
 
     definition {
