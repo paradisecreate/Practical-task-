@@ -106,7 +106,7 @@
       ansible.builtin.git:
         repo: "{{ practical_task_repo }}"
         dest: "{{ project_dir }}"
-        version: main
+        version: terraform-automation
         force: true
 
     - name: Set project ownership

@@ -11,9 +11,9 @@ dnf install -y git ansible
 cd /opt
 
 git clone \
-  --branch complete-automation \
+  --branch terraform-automation \
   --single-branch \
-  https://github.com/paradisecreate/Practical-task-.git
+  https://github.com/paradisecreate/Practical-task-.git bootstrap-repo
 
 cd /opt/Practical-task-
 

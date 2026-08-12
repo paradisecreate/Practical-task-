@@ -6,7 +6,7 @@ pipelineJob('practical-task-pipeline') {
                     remote {
                         url('https://github.com/paradisecreate/Practical-task-.git')
                     }
-                    branch('*/main')
+                    branch('*/terraform-automation')
                 }
             }
 

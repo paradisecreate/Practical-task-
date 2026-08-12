@@ -26,7 +26,10 @@ resource "aws_instance" "devops_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
 
-  # Automatically run our setup script when EC2 is created
+  # Attach IAM permissions for Jenkins
+  iam_instance_profile = aws_iam_instance_profile.jenkins.name
+
+  # Automatically bootstrap EC2
   user_data = file("${path.module}/user_data.sh")
 
   tags = {
