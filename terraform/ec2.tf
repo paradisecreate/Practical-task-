@@ -1,5 +1,5 @@
-# Made more flexible using ChatGPT suggestions
 # Find the latest Amazon Linux 2023 AMI automatically
+
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -21,9 +21,13 @@ data "aws_ami" "amazon_linux" {
 }
 
 # Create EC2 instance
+
 resource "aws_instance" "devops_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
+
+  # Automatically run our setup script when EC2 is created
+  user_data = file("${path.module}/user_data.sh")
 
   tags = {
     Name = "Your Instance"
@@ -31,6 +35,7 @@ resource "aws_instance" "devops_server" {
 }
 
 # Create static public IP
+
 resource "aws_eip" "devops_server_eip" {
   domain = "vpc"
 
@@ -40,12 +45,14 @@ resource "aws_eip" "devops_server_eip" {
 }
 
 # Attach static IP to EC2
+
 resource "aws_eip_association" "devops_server_eip_assoc" {
   instance_id   = aws_instance.devops_server.id
   allocation_id = aws_eip.devops_server_eip.id
 }
 
 # Display static IP after terraform apply
+
 output "devops_server_public_ip" {
   value = aws_eip.devops_server_eip.public_ip
 }
