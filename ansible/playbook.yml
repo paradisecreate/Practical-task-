@@ -37,6 +37,24 @@
         state: present
 
     # ==================================================
+    # TMP SPACE
+    # Jenkins disables the node if /tmp has < 1 GiB free
+    # ==================================================
+
+    - name: Ensure /tmp has 2 GB
+      ansible.builtin.command:
+        cmd: mount -o remount,size=2G /tmp
+      changed_when: true
+
+    - name: Persist /tmp size
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^tmpfs\s+/tmp\s+'
+        line: 'tmpfs /tmp tmpfs defaults,size=2G,mode=1777 0 0'
+        create: true
+        mode: "0644"
+
+    # ==================================================
     # DOCKER
     # ==================================================
 
@@ -121,7 +139,7 @@
         recurse: true
 
     # ==================================================
-    # JENKINS CONFIGURATION AS CODE
+    # JCASC
     # ==================================================
 
     - name: Create Jenkins JCasC directory
@@ -177,7 +195,7 @@
     # PROJECT
     # ==================================================
 
-    - name: Remove old project directory if broken
+    - name: Remove old project directory
       ansible.builtin.file:
         path: "{{ project_dir }}"
         state: absent
@@ -226,7 +244,6 @@
         that:
           - website_directory.stat.exists
           - website_directory.stat.isdir
-        fail_msg: "website directory was not found."
 
     - name: Verify index.html
       ansible.builtin.stat:
@@ -237,7 +254,6 @@
       ansible.builtin.assert:
         that:
           - index_file.stat.exists
-        fail_msg: "website/index.html was not found."
 
     - name: Check Docker
       ansible.builtin.command:
@@ -257,4 +273,9 @@
     - name: Check Jenkins
       ansible.builtin.command:
         cmd: systemctl is-active jenkins
+      changed_when: false
+
+    - name: Check tmp space
+      ansible.builtin.command:
+        cmd: df -h /tmp
       changed_when: false

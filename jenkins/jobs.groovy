@@ -1,4 +1,5 @@
 pipelineJob('practical-task-pipeline') {
+
     triggers {
         scm('H/2 * * * *')
     }
