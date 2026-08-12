@@ -1,4 +1,8 @@
 pipelineJob('practical-task-pipeline') {
+    triggers {
+        githubPush()
+    }
+
     definition {
         cpsScm {
             scm {
@@ -6,6 +10,7 @@ pipelineJob('practical-task-pipeline') {
                     remote {
                         url('https://github.com/paradisecreate/Practical-task-.git')
                     }
+
                     branch('*/terraform-automation')
                 }
             }
