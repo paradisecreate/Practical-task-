@@ -104,6 +104,12 @@
             border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; resize: vertical;
         }
         textarea:focus { outline: 2px solid #A100FF; border-color: #A100FF; }
+        input[type="password"] {
+            width: 100%; padding: 12px; font-size: 15px;
+            border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit;
+        }
+        input[type="password"]:focus { outline: 2px solid #A100FF; border-color: #A100FF; }
+        .field { margin-bottom: 14px; }
         .btn {
             display: inline-block; margin-top: 14px; background-color: #A100FF; color: white;
             border: none; padding: 11px 22px; font-size: 15px; border-radius: 4px;
@@ -117,6 +123,19 @@
         #demoStatus.ok { display: block; background: #f2e6ff; color: #5a00a0; }
         #demoStatus.err { display: block; background: #fee2e2; color: #991b1b; }
         .demo-col ol { margin: 10px 0 0 18px; color: #555; line-height: 1.7; }
+
+        /* Board of tickets (right column) */
+        .board { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+        .ticket {
+            background: #faf5ff; border: 1px solid #e4ccff; border-left: 5px solid #A100FF;
+            border-radius: 6px; padding: 14px 16px;
+        }
+        .ticket-tag {
+            display: inline-block; background: #A100FF; color: #fff; font-size: 12px;
+            font-weight: bold; padding: 2px 10px; border-radius: 10px; margin-bottom: 8px;
+        }
+        .ticket p { color: #333; line-height: 1.5; word-break: break-word; }
+        .board-empty { color: #888; font-style: italic; padding: 10px 0; }
 
         /* Controls */
         .controls {
@@ -237,37 +256,43 @@ flowchart LR
         <!-- Slide 3: Demo -->
         <section class="slide" id="slide-3" aria-label="Slide 4: Live Demo" role="group">
             <div class="slide-inner">
-                <h1 class="slide-title">Live Demo</h1>
+                <h1 class="slide-title">Live Demo &mdash; Requirements Board</h1>
                 <div class="demo-grid">
 
-                    <!-- Part 1: input -->
+                    <!-- Left: request form -->
                     <div class="demo-col">
-                        <span class="step">Part 1 &mdash; Input</span>
+                        <span class="step">Request</span>
                         <h3>Type a requirement</h3>
                         <p class="lead" style="font-size:15px;margin:8px 0 14px;">
-                            Submitting sends it to the local backend, which edits the site and pushes to GitHub.
+                            Submitting pushes it to GitHub. Jenkins then deploys, and the ticket
+                            appears in the board once the site is live.
                         </p>
                         <form id="demoForm">
-                            <label for="demoReq">New requirement</label>
-                            <textarea id="demoReq" maxlength="500"
-                                placeholder="e.g. Add a testimonials section" required></textarea>
+                            <div class="field">
+                                <label for="demoReq">New requirement</label>
+                                <textarea id="demoReq" maxlength="500"
+                                    placeholder="e.g. Add a testimonials section" required></textarea>
+                            </div>
+                            <div class="field">
+                                <label for="demoSecret">Passphrase</label>
+                                <input type="password" id="demoSecret"
+                                    autocomplete="off" placeholder="Required to submit" required>
+                            </div>
                             <button type="submit" class="btn" id="demoBtn">Submit &amp; Deploy</button>
                         </form>
                         <p id="demoStatus" role="status" aria-live="polite"></p>
                     </div>
 
-                    <!-- Part 2: deployment -->
+                    <!-- Right: board of tickets (server-inserted after deploy) -->
                     <div class="demo-col">
-                        <span class="step">Part 2 &mdash; Deployment</span>
-                        <h3>Watch it go live</h3>
-                        <ol>
-                            <li>Jenkins detects the push (Poll SCM).</li>
-                            <li>Pipeline runs: build &rarr; ECR &rarr; EC2 + S3.</li>
-                            <li>A new card appears on the live site.</li>
-                        </ol>
-                        <a class="btn secondary" href="http://18.200.239.168/" target="_blank" rel="noopener">
-                            View live site &rarr;
-                        </a>
+                        <span class="step">Board</span>
+                        <h3>Tickets</h3>
+                        <p class="lead" style="font-size:15px;margin:8px 0 14px;">
+                            These are live on the deployed site. New ones show up here after Jenkins deploys.
+                        </p>
+                        <div class="board" id="board">
+                            <!-- new-cards -->
+                        </div>
                     </div>
 
                 </div>
@@ -326,10 +351,12 @@ flowchart LR
 
             show(0);
 
-            // ---- Demo form: talk to the local backend (server.js) ----
-            const BACKEND = 'http://localhost:3000/api/requirement';
+            // ---- Demo form: talk to the backend (server.js) ----
+            // Backend runs on the EC2 host, same box that serves this page.
+            const BACKEND = 'http://18.200.239.168:3000/api/requirement';
             const form = document.getElementById('demoForm');
             const req = document.getElementById('demoReq');
+            const secret = document.getElementById('demoSecret');
             const btn = document.getElementById('demoBtn');
             const status = document.getElementById('demoStatus');
 
@@ -338,17 +365,20 @@ flowchart LR
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = req.value.trim();
-                if (!text) { return; }
+                const pass = secret.value;
+                if (!text || !pass) { return; }
                 btn.disabled = true;
                 setStatus('Submitting...', true);
                 try {
                     const res = await fetch(BACKEND, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-Board-Secret': pass },
                         body: JSON.stringify({ requirement: text })
                     });
                     const data = await res.json();
-                    if (data.ok) { setStatus(data.message || 'Pushed! Jenkins will deploy it shortly.', true); req.value = ''; }
+                    // The ticket is NOT shown here. It appears on the board only
+                    // after Jenkins deploys the pushed change and the page reloads.
+                    if (data.ok) { setStatus('Pushed! Jenkins is deploying \u2014 reload after it finishes to see the ticket.', true); req.value = ''; }
                     else { setStatus('Error: ' + (data.error || 'unknown'), false); }
                 } catch (err) {
                     setStatus('Could not reach the backend. Is server.js running?', false);
