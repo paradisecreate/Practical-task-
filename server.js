@@ -47,12 +47,27 @@ function escapeHtml(s) {
 
 // Run git safely: execFile uses an args array (no shell), so the
 // requirement text can never be interpreted as a shell command.
+//
+// Two guards prevent the #1 cause of ERR_EMPTY_RESPONSE on the board:
+//  - timeout: a hanging `git push` is killed instead of wedging the request
+//    forever (which closes the socket with no reply).
+//  - GIT_TERMINAL_PROMPT=0: git NEVER pauses to ask for a username/password.
+//    On a headless EC2 box an interactive prompt would hang the process; now
+//    it fails fast with a clear error we can return to the browser.
 function git(args) {
     return new Promise((resolve, reject) => {
-        execFile('git', ['-C', REPO, ...args], (err, stdout, stderr) => {
-            if (err) { reject(new Error(stderr || err.message)); }
-            else { resolve(stdout.trim()); }
-        });
+        execFile(
+            'git',
+            ['-C', REPO, ...args],
+            {
+                timeout: 20000,                                  // 20s hard cap
+                env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } // never prompt
+            },
+            (err, stdout, stderr) => {
+                if (err) { reject(new Error(stderr || err.message)); }
+                else { resolve(stdout.trim()); }
+            }
+        );
     });
 }
 
@@ -89,6 +104,14 @@ const server = http.createServer((req, res) => {
 
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
 
+    // Simple health check so you can verify the server is alive without
+    // sending the secret:  curl -i http://localhost:3000/health
+    if (req.method === 'GET' && req.url === '/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, status: 'up' }));
+        return;
+    }
+
     if (req.method === 'POST' && req.url === '/api/requirement') {
         // Lock: reject anyone who doesn't send the correct secret header.
         if (!secretMatches(req.headers['x-board-secret'])) {
@@ -114,14 +137,22 @@ const server = http.createServer((req, res) => {
 
                 addCard(text);
                 await git(['add', 'website/indexKZ.html']);
-                await git(['commit', '-m', 'Add requirement from board']);
+                // If nothing changed, `git commit` exits non-zero. Treat that
+                // as success instead of a 500 so the board stays responsive.
+                try {
+                    await git(['commit', '-m', 'Add requirement from board']);
+                } catch (commitErr) {
+                    if (!/nothing to commit/i.test(commitErr.message)) { throw commitErr; }
+                }
                 await git(['push']);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ ok: true, message: 'Pushed! Jenkins will deploy it shortly.' }));
             } catch (e) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ ok: false, error: e.message }));
+                if (!res.headersSent) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ ok: false, error: e.message }));
+                }
             }
         });
         return;
@@ -138,7 +169,30 @@ if (!BOARD_SECRET || BOARD_SECRET.length < 8) {
     process.exit(1);
 }
 
+// Keep the process alive no matter what. A single bad request or a rejected
+// git command must never take the whole server down — that is exactly what
+// produces ERR_EMPTY_RESPONSE in the browser (socket accepted, then killed).
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception (server stays up):', err);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled rejection (server stays up):', reason);
+});
+
+// Malformed HTTP from a client should get a clean 400, not a silently
+// dropped connection.
+server.on('clientError', (err, socket) => {
+    if (socket.writable) {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+    }
+});
+
+server.on('error', (err) => {
+    console.error('Server error:', err.message);
+});
+
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Requirements Board backend running at http://localhost:${PORT}`);
     console.log('Locked: submissions require the correct passphrase.');
+    console.log(`Health check: http://localhost:${PORT}/health`);
 });
