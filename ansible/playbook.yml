@@ -17,6 +17,7 @@
       ansible.builtin.yum:
         name:
           - git
+          - curl
           - unzip
         state: present
 
