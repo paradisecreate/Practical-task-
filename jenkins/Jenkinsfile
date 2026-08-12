@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION = 'eu-west-1'
-        ACCOUNT_ID = '597765856364'
+        ACCOUNT_ID = '499210847987'
 
         ECR_REPO = 'your-task-website'
 
