@@ -138,7 +138,7 @@ if (!BOARD_SECRET || BOARD_SECRET.length < 8) {
     process.exit(1);
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Requirements Board backend running at http://localhost:${PORT}`);
     console.log('Locked: submissions require the correct passphrase.');
 });
