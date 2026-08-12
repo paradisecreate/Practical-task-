@@ -96,6 +96,7 @@ pipeline {
                     docker rm -f $CONTAINER || true
                     docker run -d \
                         --name $CONTAINER \
+                        --add-host=host.docker.internal:host-gateway \
                         -p 80:80 \
                         $IMAGE:$IMAGE_TAG
                 '''
