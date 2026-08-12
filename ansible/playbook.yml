@@ -5,38 +5,111 @@
 
   vars:
     practical_task_repo: "https://github.com/paradisecreate/Practical-task-.git"
+    project_dir: "/opt/practical-task"
 
   tasks:
+
+    # --------------------------------------------------
+    # System packages
+    # --------------------------------------------------
+
     - name: Update Amazon Linux packages
-      ansible.builtin.yum:
+      ansible.builtin.dnf:
         name: "*"
         state: latest
         update_cache: true
 
     - name: Install required packages
-      ansible.builtin.yum:
+      ansible.builtin.dnf:
         name:
           - git
-          - curl
           - unzip
+          - wget
+          - curl
+          - fontconfig
+          - java-21-openjdk
+          - docker
         state: present
+
+    # --------------------------------------------------
+    # Docker
+    # --------------------------------------------------
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    # --------------------------------------------------
+    # Jenkins repository
+    # --------------------------------------------------
+
+    - name: Add Jenkins repository
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/rpm-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+        mode: "0644"
+
+    - name: Install Jenkins
+      ansible.builtin.dnf:
+        name: jenkins
+        state: present
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable and start Jenkins
+      ansible.builtin.systemd:
+        name: jenkins
+        enabled: true
+        state: started
+
+    # --------------------------------------------------
+    # Jenkins permissions for Docker
+    # --------------------------------------------------
+
+    - name: Add Jenkins user to Docker group
+      ansible.builtin.user:
+        name: jenkins
+        groups: docker
+        append: true
+      notify: Restart Jenkins
+
+    # --------------------------------------------------
+    # Project
+    # --------------------------------------------------
 
     - name: Create project directory
       ansible.builtin.file:
-        path: /opt/practical-task
+        path: "{{ project_dir }}"
         state: directory
+        owner: jenkins
+        group: jenkins
         mode: "0755"
 
     - name: Clone Practical Task repository
       ansible.builtin.git:
         repo: "{{ practical_task_repo }}"
-        dest: /opt/practical-task
+        dest: "{{ project_dir }}"
         version: main
         force: true
 
+    - name: Set project ownership
+      ansible.builtin.file:
+        path: "{{ project_dir }}"
+        owner: jenkins
+        group: jenkins
+        recurse: true
+
+    # --------------------------------------------------
+    # Verification
+    # --------------------------------------------------
+
     - name: Check website directory
       ansible.builtin.stat:
-        path: /opt/practical-task/website
+        path: "{{ project_dir }}/website"
       register: website_directory
 
     - name: Verify website directory exists
@@ -49,7 +122,7 @@
 
     - name: Check index.html
       ansible.builtin.stat:
-        path: /opt/practical-task/website/index.html
+        path: "{{ project_dir }}/website/index.html"
       register: index_file
 
     - name: Verify index.html exists
@@ -58,3 +131,29 @@
           - index_file.stat.exists
         fail_msg: "website/index.html was not found."
         success_msg: "website/index.html found successfully."
+
+    # --------------------------------------------------
+    # Final checks
+    # --------------------------------------------------
+
+    - name: Check Docker version
+      ansible.builtin.command:
+        cmd: docker --version
+      changed_when: false
+
+    - name: Check Java version
+      ansible.builtin.command:
+        cmd: java -version
+      changed_when: false
+
+    - name: Check Jenkins service
+      ansible.builtin.command:
+        cmd: systemctl is-active jenkins
+      changed_when: false
+
+  handlers:
+
+    - name: Restart Jenkins
+      ansible.builtin.systemd:
+        name: jenkins
+        state: restarted

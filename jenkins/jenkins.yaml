@@ -1,0 +1,12 @@
+jenkins:
+  systemMessage: "Practical Task Jenkins"
+
+  authorizationStrategy:
+    unsecured: {}
+
+  securityRealm:
+    none
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
