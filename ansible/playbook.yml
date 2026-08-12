@@ -25,7 +25,6 @@
           - git
           - unzip
           - wget
-          - curl
           - fontconfig
           - java-21-amazon-corretto
           - docker
