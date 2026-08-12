@@ -2,16 +2,16 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'eu-west-1'
-        ACCOUNT_ID = '499210847987'
+    AWS_REGION = 'eu-west-1'
+    ACCOUNT_ID = 'ТВОЙ_НОВЫЙ_ACCOUNT_ID'
 
-        ECR_REPO = 'your-task-website'
+    ECR_REPO = 'your-task-website'
 
-        IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+    IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+    IMAGE_TAG = "${BUILD_NUMBER}"
 
-        S3_BUCKET = 'your-website-bucket'
-    }
+    S3_BUCKET = "your-website-bucket-${ACCOUNT_ID}"
+}
 
     stages {
 

@@ -7,6 +7,7 @@
   vars:
     practical_task_repo: "https://github.com/paradisecreate/Practical-task-.git"
     project_dir: "/opt/practical-task"
+    jenkins_casc_dir: "/var/lib/jenkins/casc"
 
   tasks:
     # --------------------------------------------------
@@ -64,30 +65,114 @@
         name: jenkins
         state: present
 
-    - name: Reload systemd
-      ansible.builtin.systemd_service:
-        daemon_reload: true
-
-    - name: Enable and start Jenkins
-      ansible.builtin.systemd_service:
-        name: jenkins
-        enabled: true
-        state: started
-
-    # --------------------------------------------------
-    # Jenkins permissions for Docker
-    # --------------------------------------------------
-
     - name: Add Jenkins user to Docker group
       ansible.builtin.user:
         name: jenkins
         groups: docker
         append: true
-      notify: Restart Jenkins
 
-    # Run handler now so Jenkins receives Docker permissions
-    - name: Apply Jenkins Docker group membership
-      ansible.builtin.meta: flush_handlers
+    # --------------------------------------------------
+    # Jenkins plugins
+    # --------------------------------------------------
+
+    - name: Create Jenkins plugins directory
+      ansible.builtin.file:
+        path: /var/lib/jenkins/plugins
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: "0755"
+
+    - name: Download Jenkins plugin manager
+      ansible.builtin.get_url:
+        url: https://github.com/jenkinsci/plugin-installation-manager-tool/releases/latest/download/jenkins-plugin-manager.jar
+        dest: /opt/jenkins-plugin-manager.jar
+        mode: "0644"
+
+    - name: Install required Jenkins plugins
+      ansible.builtin.command:
+        cmd: >
+          java -jar /opt/jenkins-plugin-manager.jar
+          --war /usr/share/java/jenkins.war
+          --plugin-download-directory /var/lib/jenkins/plugins
+          --plugins configuration-as-code job-dsl workflow-aggregator git
+      changed_when: true
+
+    - name: Set Jenkins plugin ownership
+      ansible.builtin.file:
+        path: /var/lib/jenkins/plugins
+        owner: jenkins
+        group: jenkins
+        recurse: true
+
+    # --------------------------------------------------
+    # Jenkins Configuration as Code
+    # --------------------------------------------------
+
+    - name: Create Jenkins JCasC directory
+      ansible.builtin.file:
+        path: "{{ jenkins_casc_dir }}"
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: "0755"
+
+    - name: Copy Jenkins JCasC configuration
+      ansible.builtin.copy:
+        src: /opt/bootstrap-repo/jenkins/jenkins.yaml
+        dest: "{{ jenkins_casc_dir }}/jenkins.yaml"
+        remote_src: true
+        owner: jenkins
+        group: jenkins
+        mode: "0644"
+
+    - name: Copy Jenkins Job DSL
+      ansible.builtin.copy:
+        src: /opt/bootstrap-repo/jenkins/jobs.groovy
+        dest: "{{ jenkins_casc_dir }}/jobs.groovy"
+        remote_src: true
+        owner: jenkins
+        group: jenkins
+        mode: "0644"
+
+    # --------------------------------------------------
+    # Disable Jenkins setup wizard + enable JCasC
+    # --------------------------------------------------
+
+    - name: Create Jenkins systemd override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/jenkins.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Configure Jenkins environment
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/jenkins.service.d/override.conf
+        mode: "0644"
+        content: |
+          [Service]
+          Environment="CASC_JENKINS_CONFIG={{ jenkins_casc_dir }}/jenkins.yaml"
+          Environment="JAVA_OPTS=-Djenkins.install.runSetupWizard=false"
+
+    - name: Reload systemd
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Enable and restart Jenkins
+      ansible.builtin.systemd_service:
+        name: jenkins
+        enabled: true
+        state: restarted
+
+    # --------------------------------------------------
+    # Wait for Jenkins
+    # --------------------------------------------------
+
+    - name: Wait for Jenkins port 8080
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8080
+        timeout: 180
 
     # --------------------------------------------------
     # Project
@@ -144,10 +229,6 @@
         fail_msg: "website/index.html was not found."
         success_msg: "website/index.html found successfully."
 
-    # --------------------------------------------------
-    # Final checks
-    # --------------------------------------------------
-
     - name: Check Docker version
       ansible.builtin.command:
         cmd: docker --version
@@ -158,19 +239,12 @@
         cmd: java -version
       changed_when: false
 
+    - name: Check AWS CLI
+      ansible.builtin.command:
+        cmd: aws --version
+      changed_when: false
+
     - name: Check Jenkins service
       ansible.builtin.command:
         cmd: systemctl is-active jenkins
       changed_when: false
-
-    - name: Wait for Jenkins port 8080
-      ansible.builtin.wait_for:
-        port: 8080
-        host: 127.0.0.1
-        timeout: 120
-
-  handlers:
-    - name: Restart Jenkins
-      ansible.builtin.systemd_service:
-        name: jenkins
-        state: restarted
