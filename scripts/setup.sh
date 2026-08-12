@@ -44,20 +44,23 @@ echo
 echo "=== 4. Installing Terraform if missing ==="
 
 if ! command -v terraform >/dev/null 2>&1; then
-
     TERRAFORM_VERSION="1.12.2"
+    TEMP_DIR=$(mktemp -d)
 
-    curl -LO \
-      "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    curl -L \
+        "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
+        -o "$TEMP_DIR/terraform.zip"
 
-    unzip "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    unzip -q "$TEMP_DIR/terraform.zip" -d "$TEMP_DIR"
 
-    sudo mv terraform /usr/local/bin/
+    sudo install "$TEMP_DIR/terraform" /usr/local/bin/terraform
 
-    rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    rm -rf "$TEMP_DIR"
 else
     echo "Terraform already installed"
 fi
+
+terraform version
 
 terraform version
 
