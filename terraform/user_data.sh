@@ -1,23 +1,26 @@
 #!/bin/bash
 set -e
 
-echo "===== Starting EC2 setup ====="
+echo "===== Starting EC2 bootstrap ====="
 
 # Install Git and Ansible
 dnf update -y
 dnf install -y git ansible
 
-# Clone project
+# Move to /opt
 cd /opt
 
+# Clone the automation branch
 git clone \
   --branch terraform-automation \
   --single-branch \
-  https://github.com/paradisecreate/Practical-task-.git bootstrap-repo
+  https://github.com/paradisecreate/Practical-task-.git \
+  bootstrap-repo
 
-cd /opt/Practical-task-
+# Enter the repository we just cloned
+cd /opt/bootstrap-repo
 
-# Run Ansible
+# Run the Ansible playbook
 ansible-playbook ansible/playbook.yml
 
-echo "===== EC2 setup completed ====="
+echo "===== EC2 bootstrap completed ====="
