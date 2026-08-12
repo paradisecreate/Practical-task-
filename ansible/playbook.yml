@@ -5,9 +5,7 @@
   become: true
 
   vars:
-    practical_task_repo: "https://github.com/paradisecreate/Practical-task-.git"
     practical_task_branch: "terraform-automation"
-
     project_dir: "/opt/practical-task"
 
     jenkins_home: "/var/lib/jenkins"
@@ -64,7 +62,7 @@
         key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2026.key
 
     # ==================================================
-    # JENKINS PACKAGE
+    # JENKINS
     # ==================================================
 
     - name: Install Jenkins
@@ -78,7 +76,6 @@
         groups: docker
         append: true
 
-    # Do not start Jenkins before plugins + JCasC exist
     - name: Stop Jenkins before configuration
       ansible.builtin.systemd_service:
         name: jenkins
@@ -103,7 +100,7 @@
         dest: "{{ plugin_manager_jar }}"
         mode: "0644"
 
-    - name: Install required Jenkins plugins
+    - name: Install Jenkins plugins
       ansible.builtin.command:
         cmd: >
           java -jar {{ plugin_manager_jar }}
@@ -124,7 +121,7 @@
         recurse: true
 
     # ==================================================
-    # JCASC
+    # JENKINS CONFIGURATION AS CODE
     # ==================================================
 
     - name: Create Jenkins JCasC directory
@@ -144,7 +141,7 @@
         group: jenkins
         mode: "0644"
 
-    - name: Copy Job DSL file
+    - name: Copy Jenkins Job DSL
       ansible.builtin.copy:
         src: /opt/bootstrap-repo/jenkins/jobs.groovy
         dest: "{{ jenkins_casc_dir }}/jobs.groovy"
@@ -154,7 +151,7 @@
         mode: "0644"
 
     # ==================================================
-    # JENKINS SYSTEMD CONFIG
+    # JENKINS SYSTEMD
     # ==================================================
 
     - name: Create Jenkins systemd override directory
@@ -180,17 +177,14 @@
     # PROJECT
     # ==================================================
 
-    - name: Create project directory
+    - name: Remove old project directory if broken
       ansible.builtin.file:
         path: "{{ project_dir }}"
-        state: directory
-        owner: jenkins
-        group: jenkins
-        mode: "0755"
+        state: absent
 
     - name: Clone Practical Task repository
       ansible.builtin.git:
-        repo: "{{ practical_task_repo }}"
+        repo: "https://github.com/paradisecreate/Practical-task-.git"
         dest: "{{ project_dir }}"
         version: "{{ practical_task_branch }}"
         force: true
@@ -212,7 +206,7 @@
         enabled: true
         state: started
 
-    - name: Wait for Jenkins port 8080
+    - name: Wait for Jenkins
       ansible.builtin.wait_for:
         host: 127.0.0.1
         port: 8080
@@ -222,24 +216,24 @@
     # VERIFICATION
     # ==================================================
 
-    - name: Check website directory
+    - name: Verify website directory
       ansible.builtin.stat:
         path: "{{ project_dir }}/website"
       register: website_directory
 
-    - name: Verify website directory exists
+    - name: Assert website directory exists
       ansible.builtin.assert:
         that:
           - website_directory.stat.exists
           - website_directory.stat.isdir
-        fail_msg: "The website directory was not found."
+        fail_msg: "website directory was not found."
 
-    - name: Check index.html
+    - name: Verify index.html
       ansible.builtin.stat:
         path: "{{ project_dir }}/website/index.html"
       register: index_file
 
-    - name: Verify index.html exists
+    - name: Assert index.html exists
       ansible.builtin.assert:
         that:
           - index_file.stat.exists
@@ -260,12 +254,7 @@
         cmd: aws --version
       changed_when: false
 
-    - name: Check Jenkins service
+    - name: Check Jenkins
       ansible.builtin.command:
         cmd: systemctl is-active jenkins
-      changed_when: false
-
-    - name: Check Jenkins port
-      ansible.builtin.command:
-        cmd: ss -lnt
       changed_when: false
