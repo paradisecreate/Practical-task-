@@ -28,9 +28,15 @@ resource "aws_instance" "devops_server" {
     aws_security_group.jenkins.id
   ]
 
-  user_data = file("${path.module}/user_data.sh")
-
+  user_data                   = file("${path.module}/user_data.sh")
   user_data_replace_on_change = true
+
+  # More disk space for Jenkins, Docker images,
+  # Jenkins workspace and temporary files
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
 
   tags = {
     Name      = "Your Instance"
@@ -38,6 +44,7 @@ resource "aws_instance" "devops_server" {
   }
 }
 
+# Static Elastic IP
 resource "aws_eip" "devops_server_eip" {
   domain = "vpc"
 
@@ -47,6 +54,7 @@ resource "aws_eip" "devops_server_eip" {
   }
 }
 
+# Attach Elastic IP to EC2
 resource "aws_eip_association" "devops_server_eip_assoc" {
   instance_id   = aws_instance.devops_server.id
   allocation_id = aws_eip.devops_server_eip.id
