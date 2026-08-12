@@ -20,7 +20,7 @@ data "aws_ami" "amazon_linux" {
 
 resource "aws_instance" "devops_server" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = var.instance_type
+  instance_type = "t3.medium"
 
   iam_instance_profile = aws_iam_instance_profile.jenkins.name
 
@@ -31,8 +31,6 @@ resource "aws_instance" "devops_server" {
   user_data                   = file("${path.module}/user_data.sh")
   user_data_replace_on_change = true
 
-  # More disk space for Jenkins, Docker images,
-  # Jenkins workspace and temporary files
   root_block_device {
     volume_size = 20
     volume_type = "gp3"
@@ -44,7 +42,6 @@ resource "aws_instance" "devops_server" {
   }
 }
 
-# Static Elastic IP
 resource "aws_eip" "devops_server_eip" {
   domain = "vpc"
 
@@ -54,7 +51,6 @@ resource "aws_eip" "devops_server_eip" {
   }
 }
 
-# Attach Elastic IP to EC2
 resource "aws_eip_association" "devops_server_eip_assoc" {
   instance_id   = aws_instance.devops_server.id
   allocation_id = aws_eip.devops_server_eip.id

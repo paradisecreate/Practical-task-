@@ -1,7 +1,8 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "website" {
-  bucket = "your-website-bucket-${data.aws_caller_identity.current.account_id}"
+  bucket        = "your-website-bucket-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
 
   tags = {
     Name        = "your-website-bucket"

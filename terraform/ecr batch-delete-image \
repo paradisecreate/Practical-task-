@@ -1,0 +1,12 @@
+{
+    "imageIds": [
+        {
+            "imageDigest": "sha256:63904fcb4d1c0d6dce0ebd845755ee8107b1c9d8aa563a6db655a50d01c4bdd5",
+            "imageTag": "2"
+        },
+        {
+            "imageDigest": "sha256:63904fcb4d1c0d6dce0ebd845755ee8107b1c9d8aa563a6db655a50d01c4bdd5",
+            "imageTag": "latest"
+        }
+    ]
+}
