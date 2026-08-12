@@ -1,31 +1,51 @@
-resource "aws_instance" "devops_server" {
-  ami           = "ami-04bc53b7a499f5d37"
-  instance_type = "t3.medium"
+# Made more flexible using ChatGPT suggestions
+# Find the latest Amazon Linux 2023 AMI automatically
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
 
-  tags = {
-    Name = "DevOps-team2"
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023.*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
+# Create EC2 instance
+resource "aws_instance" "devops_server" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = var.instance_type
 
-# Static public IP for the EC2 instance
+  tags = {
+    Name = "Your Instance"
+  }
+}
+
+# Create static public IP
 resource "aws_eip" "devops_server_eip" {
   domain = "vpc"
 
   tags = {
-    Name = "DevOps-team2-eip"
+    Name = "Your Instance-eip"
   }
 }
 
-
-# Attach Elastic IP to our EC2 instance
+# Attach static IP to EC2
 resource "aws_eip_association" "devops_server_eip_assoc" {
   instance_id   = aws_instance.devops_server.id
   allocation_id = aws_eip.devops_server_eip.id
 }
 
-
-# Show the static IP after terraform apply
+# Display static IP after terraform apply
 output "devops_server_public_ip" {
   value = aws_eip.devops_server_eip.public_ip
 }
