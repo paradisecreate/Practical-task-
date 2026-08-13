@@ -4,7 +4,7 @@
     "run_as_user": "root"
   },
   "metrics": {
-    "namespace": "Team2/EC2",
+    "namespace": "Team2/Monitoring",
     "append_dimensions": {
       "InstanceId": "${aws:InstanceId}"
     },

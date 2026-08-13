@@ -66,7 +66,7 @@ resource "aws_cloudwatch_metric_alarm" "jenkins_memory_high" {
   alarm_name        = "team2-jenkins-high-memory"
   alarm_description = "Jenkins EC2 memory usage is above 85 percent"
 
-  namespace   = "Team2/EC2"
+  namespace   = "Team2/Monitoring"
   metric_name = "mem_used_percent"
 
   statistic = "Average"
@@ -166,7 +166,7 @@ resource "aws_cloudwatch_dashboard" "team2" {
 
           metrics = [
             [
-              "Team2/EC2",
+              "Team2/Monitoring",
               "mem_used_percent",
               "InstanceId",
               aws_instance.devops_server.id
@@ -204,7 +204,7 @@ resource "aws_cloudwatch_dashboard" "team2" {
             [
               {
                 # Find disk metrics for the current Jenkins EC2 dynamically.
-                expression = "SEARCH('{Team2/EC2,InstanceId,device,fstype,path} MetricName=\"disk_used_percent\" InstanceId=\"${aws_instance.devops_server.id}\"', 'Average', 60)"
+                expression = "SEARCH('{Team2/Monitoring,InstanceId,device,fstype,path} MetricName=\"disk_used_percent\" InstanceId=\"${aws_instance.devops_server.id}\"', 'Average', 60)"
                 label      = "Root filesystem usage"
                 id         = "disk1"
               }
@@ -266,7 +266,7 @@ resource "aws_cloudwatch_dashboard" "team2" {
             [
               {
                 # Count successful Jenkins builds in 1-minute periods.
-                expression = "SEARCH('{Team2/Jenkins,BuildNumber} MetricName=\"PipelineSuccess\"', 'Sum', 60)"
+                expression = "SEARCH('{Team2/Monitoring,BuildNumber} MetricName=\"PipelineSuccess\"', 'Sum', 60)"
                 label      = "Successful pipelines"
                 id         = "success1"
               }
@@ -274,7 +274,7 @@ resource "aws_cloudwatch_dashboard" "team2" {
             [
               {
                 # Count failed Jenkins builds in 1-minute periods.
-                expression = "SEARCH('{Team2/Jenkins,BuildNumber} MetricName=\"PipelineFailure\"', 'Sum', 60)"
+                expression = "SEARCH('{Team2/Monitoring,BuildNumber} MetricName=\"PipelineFailure\"', 'Sum', 60)"
                 label      = "Failed pipelines"
                 id         = "failure1"
               }

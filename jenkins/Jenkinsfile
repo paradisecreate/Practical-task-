@@ -43,6 +43,15 @@ pipeline {
             }
         }
 
+        stage('Check CloudWatch Monitoring') {
+            steps {
+                sh '''
+                    chmod +x scripts/check-cloudwatch.sh
+                    ./scripts/check-cloudwatch.sh
+                '''
+            }
+        }
+
         // ---- 2. BUILD ----------------------------------------------------
         // Turn the website into a Docker image using the team's Dockerfile.
         stage('Build') {
@@ -129,7 +138,30 @@ pipeline {
 
     // 'post' = things to run AFTER all stages, based on the result.
     post {
-        success { echo 'Pipeline finished: deployment succeeded.' }
-        failure { echo 'Pipeline FAILED: check the stage logs above.' }
+        success {
+            echo 'Pipeline finished: deployment succeeded.'
+
+            sh '''
+                aws cloudwatch put-metric-data \
+                    --namespace Team2/Monitoring \
+                    --metric-name PipelineSuccess \
+                    --value 1 \
+                    --dimensions BuildNumber=$BUILD_NUMBER \
+                    --region $AWS_REGION
+            '''
+        }
+
+        failure {
+            echo 'Pipeline FAILED: check the stage logs above.'
+
+            sh '''
+                aws cloudwatch put-metric-data \
+                    --namespace Team2/Monitoring \
+                    --metric-name PipelineFailure \
+                    --value 1 \
+                    --dimensions BuildNumber=$BUILD_NUMBER \
+                    --region $AWS_REGION || true
+            '''
+        }
     }
 }
