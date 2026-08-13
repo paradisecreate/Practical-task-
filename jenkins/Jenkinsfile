@@ -29,7 +29,7 @@ pipeline {
 
             sh '''
                 aws cloudwatch put-metric-data \
-                    --namespace Team2/Jenkins \
+                    --namespace Team2/Monitoring \
                     --metric-name PipelineSuccess \
                     --value 1 \
                     --dimensions BuildNumber=$BUILD_NUMBER \
@@ -42,7 +42,7 @@ pipeline {
 
             sh '''
                 aws cloudwatch put-metric-data \
-                    --namespace Team2/Jenkins \
+                    --namespace Team2/Monitoring \
                     --metric-name PipelineFailure \
                     --value 1 \
                     --dimensions BuildNumber=$BUILD_NUMBER \
