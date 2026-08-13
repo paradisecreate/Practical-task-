@@ -11,16 +11,10 @@ data "aws_ami" "amazon_linux" {
     name   = "architecture"
     values = ["x86_64"]
   }
+}
 
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+data "aws_iam_instance_profile" "bootcamp" {
+  name = "Bootcamp-Instance-Profile"
 }
 
 resource "aws_instance" "jenkins" {
@@ -28,17 +22,20 @@ resource "aws_instance" "jenkins" {
   instance_type = "t3.micro"
 
   vpc_security_group_ids = [
-    local.jenkins_security_group_id
+    "sg-005e05ce419f3ec0d"
   ]
 
   iam_instance_profile = data.aws_iam_instance_profile.bootcamp.name
 
-  user_data                   = file("${path.module}/user_data.sh")
+  user_data = templatefile("${path.module}/user_data.sh", {
+    repository = "https://github.com/paradisecreate/Practical-task-.git"
+    branch     = "terraform-automation"
+  })
+
   user_data_replace_on_change = true
 
   tags = {
-    Name    = "your-instance"
-    Project = "practical-task"
+    Name = "your-instance"
   }
 }
 

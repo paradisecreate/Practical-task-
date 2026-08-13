@@ -5,9 +5,8 @@
   become: true
 
   vars:
-    project_dir: /opt/practical-task
     jenkins_home: /var/lib/jenkins
-    plugin_manager_version: "2.15.0"
+    project_dir: /opt/practical-task
 
   tasks:
 
@@ -17,16 +16,16 @@
           - git
           - wget
           - curl
-          - fontconfig
           - java-21-amazon-corretto
           - docker
+          - awscli2
         state: present
 
-    - name: Enable Docker
+    - name: Start Docker
       ansible.builtin.systemd:
         name: docker
-        enabled: true
         state: started
+        enabled: true
 
     - name: Add Jenkins repository
       ansible.builtin.get_url:
@@ -34,23 +33,82 @@
         dest: /etc/yum.repos.d/jenkins.repo
         mode: "0644"
 
-    - name: Import Jenkins repository key
+    - name: Import Jenkins key
       ansible.builtin.rpm_key:
-        state: present
         key: https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key
+        state: present
 
     - name: Install Jenkins
       ansible.builtin.dnf:
         name: jenkins
         state: present
 
-    - name: Add Jenkins user to Docker group
+    - name: Add Jenkins to Docker group
       ansible.builtin.user:
         name: jenkins
         groups: docker
         append: true
 
-    - name: Create Jenkins configuration directory
+    - name: Create Jenkins override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/jenkins.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Disable Jenkins setup wizard
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/jenkins.service.d/override.conf
+        mode: "0644"
+        content: |
+          [Service]
+          Environment="JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx384m"
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Start Jenkins
+      ansible.builtin.systemd:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Wait for Jenkins
+      ansible.builtin.uri:
+        url: http://localhost:8080/login
+        status_code:
+          - 200
+          - 403
+        timeout: 5
+      register: jenkins_ready
+      until: jenkins_ready.status in [200, 403]
+      retries: 30
+      delay: 5
+
+    - name: Download Jenkins CLI
+      ansible.builtin.get_url:
+        url: http://localhost:8080/jnlpJars/jenkins-cli.jar
+        dest: /tmp/jenkins-cli.jar
+        mode: "0644"
+
+    - name: Install Jenkins plugins
+      ansible.builtin.shell: |
+        java -jar /tmp/jenkins-cli.jar \
+          -s http://localhost:8080/ \
+          install-plugin \
+          configuration-as-code \
+          job-dsl \
+          workflow-aggregator \
+          git
+      args:
+        executable: /bin/bash
+
+    - name: Stop Jenkins before configuration
+      ansible.builtin.systemd:
+        name: jenkins
+        state: stopped
+
+    - name: Create JCasC directory
       ansible.builtin.file:
         path: "{{ jenkins_home }}/casc"
         state: directory
@@ -58,38 +116,7 @@
         group: jenkins
         mode: "0755"
 
-    - name: Create Jenkins plugins directory
-      ansible.builtin.file:
-        path: "{{ jenkins_home }}/plugins"
-        state: directory
-        owner: jenkins
-        group: jenkins
-        mode: "0755"
-
-    - name: Download Jenkins plugin manager
-      ansible.builtin.get_url:
-        url: "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/{{ plugin_manager_version }}/jenkins-plugin-manager-{{ plugin_manager_version }}.jar"
-        dest: /tmp/jenkins-plugin-manager.jar
-        mode: "0644"
-
-    - name: Install Jenkins plugins
-      ansible.builtin.command:
-        argv:
-          - java
-          - -Xmx256m
-          - -jar
-          - /tmp/jenkins-plugin-manager.jar
-          - --war
-          - /usr/share/java/jenkins.war
-          - --plugin-download-directory
-          - "{{ jenkins_home }}/plugins"
-          - --plugins
-          - configuration-as-code
-          - job-dsl
-          - workflow-aggregator
-          - git
-
-    - name: Copy Jenkins Configuration as Code file
+    - name: Copy Jenkins configuration
       ansible.builtin.copy:
         src: "{{ project_dir }}/jenkins/jenkins.yaml"
         dest: "{{ jenkins_home }}/casc/jenkins.yaml"
@@ -98,7 +125,7 @@
         group: jenkins
         mode: "0644"
 
-    - name: Copy Jenkins Job DSL file
+    - name: Copy Jenkins Job DSL
       ansible.builtin.copy:
         src: "{{ project_dir }}/jenkins/jobs.groovy"
         dest: "{{ jenkins_home }}/casc/jobs.groovy"
@@ -107,27 +134,21 @@
         group: jenkins
         mode: "0644"
 
-    - name: Create Jenkins systemd override directory
-      ansible.builtin.file:
-        path: /etc/systemd/system/jenkins.service.d
-        state: directory
-        mode: "0755"
-
-    - name: Configure Jenkins startup
+    - name: Configure JCasC
       ansible.builtin.copy:
         dest: /etc/systemd/system/jenkins.service.d/override.conf
         mode: "0644"
         content: |
           [Service]
+          Environment="JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx384m"
           Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/casc/jenkins.yaml"
-          Environment="JAVA_OPTS=-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false"
 
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: true
 
-    - name: Enable and start Jenkins
+    - name: Start configured Jenkins
       ansible.builtin.systemd:
         name: jenkins
-        enabled: true
         state: started
+        enabled: true

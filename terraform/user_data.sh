@@ -1,30 +1,27 @@
 #!/bin/bash
+set -eux
 
-set -e
+exec > >(tee /var/log/user-data.log) 2>&1
 
-exec > /var/log/user-data.log 2>&1
+echo "=== BOOTSTRAP START ==="
 
-echo "Starting bootstrap..."
+dnf install -y git python3-pip
 
-dnf install -y \
-  git \
-  python3 \
-  python3-pip
-
-pip3 install --no-cache-dir ansible
+pip3 install ansible
 
 rm -rf /opt/practical-task
 
 git clone \
-  --branch terraform-automation \
-  https://github.com/paradisecreate/Practical-task-.git \
+  --depth 1 \
+  --branch "${branch}" \
+  "${repository}" \
   /opt/practical-task
 
 cd /opt/practical-task
 
 ansible-playbook \
-  -i localhost, \
+  -i "localhost," \
   -c local \
   ansible/playbook.yml
 
-echo "Bootstrap finished."
+echo "=== BOOTSTRAP COMPLETE ==="
