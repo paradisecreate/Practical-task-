@@ -11,6 +11,10 @@
 
   tasks:
 
+    # --------------------------------------------------
+    # Required packages
+    # --------------------------------------------------
+
     - name: Install required packages
       ansible.builtin.dnf:
         name:
@@ -21,11 +25,19 @@
           - docker
         state: present
 
+    # --------------------------------------------------
+    # Docker
+    # --------------------------------------------------
+
     - name: Enable and start Docker
       ansible.builtin.systemd:
         name: docker
         enabled: true
         state: started
+
+    # --------------------------------------------------
+    # Jenkins repository
+    # --------------------------------------------------
 
     - name: Add Jenkins repository
       ansible.builtin.get_url:
@@ -38,6 +50,10 @@
         key: https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key
         state: present
 
+    # --------------------------------------------------
+    # Jenkins
+    # --------------------------------------------------
+
     - name: Install Jenkins
       ansible.builtin.dnf:
         name: jenkins
@@ -49,11 +65,15 @@
         groups: docker
         append: true
 
-    - name: Make sure Jenkins is stopped
+    - name: Make sure Jenkins is stopped before configuration
       ansible.builtin.systemd:
         name: jenkins
         state: stopped
       failed_when: false
+
+    # --------------------------------------------------
+    # Jenkins directories
+    # --------------------------------------------------
 
     - name: Create Jenkins plugins directory
       ansible.builtin.file:
@@ -70,6 +90,18 @@
         owner: jenkins
         group: jenkins
         mode: "0755"
+
+    - name: Create Jenkins temp directory
+      ansible.builtin.file:
+        path: "{{ jenkins_home }}/tmp"
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: "0755"
+
+    # --------------------------------------------------
+    # Jenkins plugins
+    # --------------------------------------------------
 
     - name: Download Jenkins plugin manager
       ansible.builtin.get_url:
@@ -101,6 +133,10 @@
         group: jenkins
         recurse: true
 
+    # --------------------------------------------------
+    # Jenkins Configuration as Code
+    # --------------------------------------------------
+
     - name: Copy Jenkins JCasC configuration
       ansible.builtin.copy:
         src: "{{ project_dir }}/jenkins/jenkins.yaml"
@@ -119,6 +155,10 @@
         group: jenkins
         mode: "0644"
 
+    # --------------------------------------------------
+    # Jenkins systemd configuration
+    # --------------------------------------------------
+
     - name: Create Jenkins systemd override directory
       ansible.builtin.file:
         path: /etc/systemd/system/jenkins.service.d
@@ -131,12 +171,16 @@
         mode: "0644"
         content: |
           [Service]
-          Environment="JAVA_OPTS=-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Xmx256m"
+          Environment="JAVA_OPTS=-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Xmx256m -Djava.io.tmpdir=/var/lib/jenkins/tmp"
           Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/casc/jenkins.yaml"
 
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: true
+
+    # --------------------------------------------------
+    # Start Jenkins
+    # --------------------------------------------------
 
     - name: Enable and start Jenkins
       ansible.builtin.systemd:
@@ -144,7 +188,11 @@
         enabled: true
         state: started
 
-    - name: Wait for Jenkins
+    # --------------------------------------------------
+    # Verify Jenkins
+    # --------------------------------------------------
+
+    - name: Wait for Jenkins to respond
       ansible.builtin.uri:
         url: http://localhost:8080/
         status_code:
@@ -155,3 +203,36 @@
       until: jenkins_status.status in [200, 403]
       retries: 40
       delay: 5
+
+    # --------------------------------------------------
+    # Verify automatic pipeline creation
+    # --------------------------------------------------
+
+    - name: Wait for practical task pipeline
+      ansible.builtin.uri:
+        url: http://localhost:8080/job/practical-task-pipeline/api/json
+        status_code: 200
+        timeout: 5
+      register: pipeline_status
+      until: pipeline_status.status == 200
+      retries: 20
+      delay: 3
+
+    # --------------------------------------------------
+    # Final checks
+    # --------------------------------------------------
+
+    - name: Verify Docker is active
+      ansible.builtin.command:
+        cmd: systemctl is-active docker
+      changed_when: false
+
+    - name: Verify Jenkins is active
+      ansible.builtin.command:
+        cmd: systemctl is-active jenkins
+      changed_when: false
+
+    - name: Verify AWS CLI
+      ansible.builtin.command:
+        cmd: aws --version
+      changed_when: false
