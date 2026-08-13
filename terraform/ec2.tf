@@ -33,7 +33,8 @@ resource "aws_instance" "jenkins" {
 
   iam_instance_profile = data.aws_iam_instance_profile.bootcamp.name
 
-  user_data = file("${path.module}/user_data.sh")
+  user_data                   = file("${path.module}/user_data.sh")
+  user_data_replace_on_change = true
 
   tags = {
     Name    = "your-instance"
