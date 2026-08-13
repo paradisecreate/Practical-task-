@@ -105,6 +105,14 @@
             line-height: 1.6;
         }
 
+        /* Section heading for the requirements area */
+        .section-title {
+            text-align: center;
+            margin: 40px 0 10px;
+            font-size: 26px;
+            color: #1f2937;
+        }
+
         /* Footer */
         footer {
             text-align: center;
@@ -123,10 +131,8 @@
         <h2>My Website</h2>
 
         <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="#">Services</a></li>
-            <li><a href="#">Contact</a></li>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="board.html">Board</a></li>
         </ul>
     </nav>
 
@@ -139,6 +145,26 @@
         </p>
 
         <a href="#" class="btn">Learn More</a>
+    </section>
+
+    <!-- Requirements added live from the Board -->
+    <section class="requirements">
+        <h2 class="section-title">Requirements from the Board</h2>
+        <div class="cards" id="requirement-cards">
+            <div class="card">
+                <h3>Requirement</h3>
+                <p>add purple header</p>
+            </div>
+            <div class="card">
+                <h3>Requirement</h3>
+                <p>add dark theme</p>
+            </div>
+            <div class="card">
+                <h3>Requirement</h3>
+                <p>blue headline</p>
+            </div>
+            <!-- new-cards -->
+        </div>
     </section>
 
     <!-- Cards -->
