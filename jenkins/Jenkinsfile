@@ -36,6 +36,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+                echo "Building Docker image..."
+
                 sh '''
                     docker build \
                         -t $IMAGE:$IMAGE_TAG \
@@ -47,9 +49,12 @@ pipeline {
 
         stage('Push to ECR') {
             steps {
+                echo 'Pushing image to ECR...'
+
                 sh '''
-                    aws ecr get-login-password --region $AWS_REGION \
-                        | docker login \
+                    aws ecr get-login-password \
+                        --region $AWS_REGION \
+                    | docker login \
                         --username AWS \
                         --password-stdin \
                         $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
@@ -62,8 +67,12 @@ pipeline {
 
         stage('Deploy to S3') {
             steps {
+                echo 'Deploying website to S3...'
+
                 sh '''
-                    aws s3 sync website/ s3://$S3_BUCKET/ \
+                    aws s3 sync \
+                        website/ \
+                        s3://$S3_BUCKET/ \
                         --delete \
                         --region $AWS_REGION
                 '''
@@ -83,7 +92,10 @@ pipeline {
         stage('Website Smoke Test') {
             steps {
                 sh '''
-                    curl -f \
+                    curl \
+                        --retry 5 \
+                        --retry-delay 3 \
+                        -f \
                         http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com/ \
                         > /dev/null
 

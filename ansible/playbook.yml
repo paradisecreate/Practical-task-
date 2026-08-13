@@ -50,7 +50,7 @@
         groups: docker
         append: true
 
-    - name: Make sure Jenkins is stopped before configuration
+    - name: Make sure Jenkins is stopped
       ansible.builtin.systemd:
         name: jenkins
         state: stopped
@@ -82,7 +82,7 @@
       ansible.builtin.command:
         argv:
           - java
-          - -Xmx256m
+          - -Xmx128m
           - -jar
           - /tmp/jenkins-plugin-manager.jar
           - --war
@@ -126,13 +126,13 @@
         state: directory
         mode: "0755"
 
-    - name: Configure Jenkins startup
+    - name: Configure Jenkins
       ansible.builtin.copy:
         dest: /etc/systemd/system/jenkins.service.d/override.conf
         mode: "0644"
         content: |
           [Service]
-          Environment="JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx384m"
+          Environment="JAVA_OPTS=-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Xmx256m"
           Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/casc/jenkins.yaml"
 
     - name: Reload systemd
@@ -145,7 +145,7 @@
         enabled: true
         state: started
 
-    - name: Wait for Jenkins to respond
+    - name: Wait for Jenkins
       ansible.builtin.uri:
         url: http://localhost:8080/
         status_code:
@@ -154,5 +154,5 @@
         timeout: 5
       register: jenkins_status
       until: jenkins_status.status in [200, 403]
-      retries: 30
+      retries: 40
       delay: 5
