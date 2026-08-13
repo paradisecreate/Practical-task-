@@ -81,7 +81,7 @@
       ansible.builtin.command:
         argv:
           - java
-          - -Xmx128m
+          - -Xmx384m
           - -jar
           - /tmp/jenkins-plugin-manager.jar
           - --war
