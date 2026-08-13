@@ -34,6 +34,19 @@ pipeline {
             }
         }
 
+        stage('Check CloudWatch Monitoring') {
+            steps {
+                sh '''
+                    chmod +x scripts/check-cloudwatch.sh
+
+                    ./scripts/check-cloudwatch.sh || {
+                        echo "WARNING: CloudWatch monitoring check failed"
+                        true
+                    }
+                '''
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -96,10 +109,28 @@ pipeline {
     post {
         success {
             echo 'Pipeline finished successfully.'
+
+            sh '''
+                aws cloudwatch put-metric-data \
+                    --namespace Team2/Jenkins \
+                    --metric-name PipelineSuccess \
+                    --value 1 \
+                    --dimensions BuildNumber=$BUILD_NUMBER \
+                    --region $AWS_REGION || true
+            '''
         }
 
         failure {
             echo 'Pipeline failed. Check the failed stage.'
+
+            sh '''
+                aws cloudwatch put-metric-data \
+                    --namespace Team2/Jenkins \
+                    --metric-name PipelineFailure \
+                    --value 1 \
+                    --dimensions BuildNumber=$BUILD_NUMBER \
+                    --region $AWS_REGION || true
+            '''
         }
     }
 }
