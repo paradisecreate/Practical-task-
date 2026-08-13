@@ -36,7 +36,7 @@ resource "aws_instance" "jenkins" {
   user_data = file("${path.module}/user_data.sh")
 
   tags = {
-    Name    = "jenkins-server"
+    Name    = "your-instance"
     Project = "practical-task"
   }
 }
