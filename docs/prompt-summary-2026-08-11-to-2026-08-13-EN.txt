@@ -1,0 +1,616 @@
+PROMPT SUMMARY — 11 AUG 2026 TO 13 AUG 2026
+===========================================
+
+This document summarizes the user’s prompts and project work from Tuesday,
+11 August 2026 through Thursday, 13 August 2026.
+
+It is organized by date and topic rather than as a raw transcript.
+
+
+======================================================================
+TUESDAY — 11 AUG 2026
+======================================================================
+
+1. AMAZON LINUX / ANSIBLE / JENKINS SETUP
+-----------------------------------------
+The user continued adapting bootcamp instructions that were originally written
+for Ubuntu to an Amazon Linux EC2 environment.
+
+Main questions and tasks included:
+- How to adapt installation commands from `apt` to Amazon Linux tools such as
+  `dnf`/`yum`.
+- How to install Python, pip, Ansible, Java, Git, Jenkins, Docker, and AWS CLI.
+- How to test Ansible against localhost.
+- How to create and run an Ansible playbook on EC2.
+- Whether Jenkins and Docker could be installed through the project playbook.
+- Whether Jenkins configuration and pipeline creation could be automated so
+  the user would not need to manually configure Jenkins through the UI.
+
+The user also asked about authentication and credentials:
+- Whether a Linux password was needed for the Jenkins user.
+- How Jenkins should authenticate to GitHub.
+- Whether EC2 should use IAM roles instead of static AWS credentials.
+
+2. PROJECT ARCHITECTURE AND REPOSITORY STRUCTURE
+------------------------------------------------
+The user provided the repository structure and asked for solutions that matched
+the actual project rather than generic examples.
+
+Important project components discussed:
+- GitHub repository
+- Terraform
+- Ansible
+- Jenkins
+- Docker
+- Node.js / Express
+- EC2
+- ECR
+- S3
+
+The user questioned why Groovy was used for Jenkins configuration and asked:
+- Whether the project should use one pipeline or multiple pipelines.
+- How Jenkinsfile relates to Jenkins itself.
+- Whether Jenkinsfile being Groovy rather than YAML is normal.
+
+3. BOOTCAMP HOSTING CONSTRAINTS
+-------------------------------
+New bootcamp rules were introduced:
+
+- The web application MUST NOT rely only on EC2 hosting.
+- Docker Hub is not allowed as the image registry.
+
+The user asked how the Docker image should be hosted under these constraints.
+
+Amazon ECR was selected as the appropriate image registry, while S3 was used
+as an additional/static website deployment target.
+
+4. AUTOMATED JENKINS CONFIGURATION
+----------------------------------
+The user wanted Jenkins to require as little manual interaction as possible.
+
+The discussion moved toward:
+- Installing Jenkins automatically with Ansible.
+- Installing Docker automatically.
+- Jenkins Configuration as Code (JCasC).
+- Job DSL / Groovy for automatic Jenkins job creation.
+- Jenkins reading the pipeline directly from the repository.
+- Avoiding manual Jenkins setup after every recreated EC2 instance.
+
+
+======================================================================
+WEDNESDAY — 12 AUG 2026
+======================================================================
+
+1. JENKINS PIPELINE DEVELOPMENT
+-------------------------------
+The user worked extensively on the Jenkins CI/CD pipeline.
+
+Pipeline stages discussed or implemented included:
+- Checkout from GitHub.
+- Build Docker image.
+- Authenticate to Amazon ECR.
+- Push Docker image to ECR.
+- Deploy the website.
+- Synchronize website files to S3.
+- Perform smoke tests.
+- Verify that the website is alive after deployment.
+
+The user repeatedly tested the pipeline and shared screenshots when Jenkins
+appeared to fail or stop responding.
+
+After troubleshooting, the user confirmed that the pipeline was working.
+
+2. INFRASTRUCTURE RECREATION AND TERRAFORM DESTROY
+---------------------------------------------------
+The user wanted the infrastructure to be disposable and reproducible.
+
+Questions included:
+- When to run `terraform destroy`.
+- Whether a destroy was required before rebuilding the environment.
+- How to start again from zero.
+- What happens when an ECR repository has already been manually deleted.
+
+The EC2 instance size was also changed during testing:
+- `t3.medium` was initially considered.
+- It appeared unsuitable in the bootcamp environment during one test.
+- `t3.micro` was selected for that automation branch at the time.
+
+This later became important because the desired final `main` configuration was
+again expected to use `t3.medium`.
+
+3. WEBHOOK AND GITHUB ACCESS
+----------------------------
+The user asked how to configure a GitHub webhook for Jenkins.
+
+The user also needed appropriate GitHub repository permissions in order to
+create a webhook and asked how an administrator could grant the required
+access.
+
+There were questions about:
+- GitHub Developer Settings.
+- Repository roles and write/admin access.
+- GitHub webhook creation.
+- Jenkins polling versus webhook-based triggering.
+
+4. WORKING WITH GIT BRANCHES
+----------------------------
+The user asked how to update a branch without pushing changes to `main`.
+
+This was part of a broader workflow in which separate branches were used for
+infrastructure automation and later testing.
+
+5. EC2 / JENKINS ACCESS
+-----------------------
+The user asked how to reconnect to Jenkins after starting an EC2 instance and
+how to determine the Jenkins URL.
+
+There were also questions about:
+- EC2 public IP discovery.
+- Ports used by Jenkins and the website.
+- Jenkins on port 8080.
+- Website services on other local ports.
+- Whether Ansible itself could conflict with Jenkins on port 8080.
+
+6. ANSIBLE INSTRUCTIONS FOR AMAZON LINUX
+----------------------------------------
+The user again supplied Ubuntu-based Ansible instructions and requested an
+Amazon Linux-compatible version.
+
+This included replacing Ubuntu package management and adapting service and
+package names to the actual EC2 operating system.
+
+
+======================================================================
+THURSDAY — 13 AUG 2026
+======================================================================
+
+1. MAIN BRANCH REWORK
+---------------------
+The user decided that the `main` branch needed to function correctly within the
+bootcamp AWS accounts.
+
+The goal was to preserve the project architecture while making the final
+version reproducible and suitable for the bootcamp environment.
+
+Important requirements included:
+- Preserve the intended project architecture.
+- Avoid unnecessary changes to unrelated configuration.
+- Use the existing project structure rather than redesigning everything.
+- Keep only the files that actually need to change.
+
+2. TERRAFORM-AUTOMATION BRANCH
+------------------------------
+The `terraform-automation` branch was treated as the working automated version
+of the infrastructure.
+
+Its major characteristics were reviewed:
+- Terraform creates the EC2 instance.
+- Terraform creates ECR.
+- Terraform creates the S3 website infrastructure.
+- Terraform uses an existing bootcamp IAM instance profile.
+- Terraform uses an existing bootcamp security group.
+- Terraform `user_data` installs/bootstrap Ansible.
+- Ansible installs and configures Jenkins and Docker.
+- Jenkins is configured with JCasC.
+- Job DSL automatically creates the Jenkins pipeline.
+- Jenkins builds a Docker image.
+- Jenkins pushes the image to ECR.
+- Jenkins runs the Nginx container on EC2 port 80.
+- Jenkins also synchronizes static website content to S3.
+- The Node.js backend runs on port 3000.
+
+The user clarified that this branch was already essentially working and that
+the main remaining functional problem was GitHub authentication for pushes
+made by the backend.
+
+3. MAIN VS TERRAFORM-AUTOMATION
+-------------------------------
+The user asked for a detailed comparison between `main` and
+`terraform-automation`.
+
+Differences discussed included:
+- Terraform resource ownership.
+- EC2 bootstrap behavior.
+- Jenkins automatic configuration.
+- JCasC / Job DSL.
+- ECR and S3 creation.
+- Docker runtime.
+- Backend behavior.
+- Branch references.
+- AWS account/resource discovery.
+- GitHub authentication.
+- Terraform destroy behavior.
+
+The user then asked what would happen if `terraform-automation` were moved or
+merged into `main`.
+
+The conclusion evolved toward using the already-working
+`terraform-automation` implementation as the infrastructure/bootstrap base for
+the new `main`, instead of trying to rebuild the architecture from scratch.
+
+4. BRANCH REFERENCES TO MAIN
+----------------------------
+Several hard-coded branch references needed to be changed before the automation
+branch could become the new `main`.
+
+Required changes included:
+- Terraform bootstrap branch:
+  `terraform-automation` -> `main`
+- Jenkins Job DSL:
+  `*/terraform-automation` -> `*/main`
+- Backend environment:
+  `GIT_BRANCH=terraform-automation` -> `GIT_BRANCH=main`
+
+The user explicitly wanted the automation to become self-contained inside
+`main` after migration.
+
+5. WEBSITE / MESSAGE BOARD
+--------------------------
+The website and `indexKZ.html` were repeatedly tested.
+
+The user reported:
+- The Jenkins pipeline succeeded.
+- TCP port 80 was reachable.
+- The website still failed to open during one troubleshooting sequence.
+- The user wanted to access the HTMLKZ / indexKZ website directly.
+
+The project includes a message board / requirements board frontend.
+
+The backend:
+- runs with Node.js on port 3000;
+- handles `/api/requirement`;
+- modifies `website/indexKZ.html`;
+- commits the change;
+- attempts to push the updated file back to GitHub.
+
+Nginx serves the website on EC2 port 80 and proxies `/api/` requests to the
+Node.js backend on port 3000.
+
+The user emphasized that the EC2 Docker deployment was already present in the
+working automation branch and corrected an earlier mistaken interpretation that
+S3 was the only runtime target.
+
+6. BOARD PASSPHRASE
+-------------------
+The user strongly expected the board to use a fixed passphrase.
+
+The final requested value was:
+
+  DevOpsBCTeam2
+
+The desired final configuration therefore uses:
+
+  BOARD_SECRET=DevOpsBCTeam2
+
+The passphrase protects the board/API request itself.
+
+It is separate from GitHub authentication and does not allow the backend to
+push commits to GitHub.
+
+7. GITHUB TOKEN / PUSH PROBLEM
+------------------------------
+The remaining backend problem concerned Git authentication.
+
+The board backend can:
+- modify `indexKZ.html`;
+- commit changes;
+- run Git pull/rebase;
+- attempt to push to `main`.
+
+However, pushing requires valid GitHub authentication.
+
+The user asked whether the requirement for a token could be avoided.
+
+Potential future mechanisms include:
+- GitHub token;
+- deploy key;
+- GitHub App;
+- Jenkins/Git credentials;
+- another secure Git authentication mechanism.
+
+No GitHub token was intentionally embedded into the final infrastructure files.
+
+8. CLOUDWATCH
+-------------
+New CloudWatch-related files appeared in `main`, and the user explicitly asked
+for them to be checked before finalizing the migration.
+
+The monitoring architecture includes:
+- Amazon CloudWatch Agent.
+- Custom EC2 memory metrics.
+- Disk usage metrics.
+- CPU/status monitoring through CloudWatch.
+- CloudWatch alarms.
+- CloudWatch dashboard.
+- Jenkins custom metrics:
+  `PipelineSuccess`
+  `PipelineFailure`
+
+A compatibility issue was identified:
+- the CloudWatch Terraform configuration referenced the old resource
+  `aws_instance.devops_server`;
+- the automated EC2 resource is named `aws_instance.jenkins`.
+
+Therefore CloudWatch references need to use:
+
+  aws_instance.jenkins.id
+
+The final design also installs and starts the CloudWatch Agent through Ansible.
+
+9. CLOUDWATCH / SECURITY TEST BRANCH
+------------------------------------
+The `zl-sec-test` branch was also analyzed.
+
+It was found to primarily add monitoring/observability rather than an actual
+security-scanning pipeline.
+
+Important findings included:
+- CloudWatch Agent support.
+- CloudWatch alarms/dashboard.
+- Jenkins success/failure metrics.
+- No dedicated security scanner stage in Jenkinsfile.
+- Some stale references still pointed to `terraform-automation`.
+- Some CloudWatch Terraform references used an EC2 resource name that did not
+  match the actual resource.
+
+The user requested these mismatches to be represented accurately in the
+architecture documentation.
+
+10. ARCHITECTURE DIAGRAM
+------------------------
+The user requested a complete Draw.io architecture covering:
+- `main`
+- `terraform-automation`
+- `zl-sec-test`
+
+The architecture was built based on repository files rather than only prior
+conversation memory.
+
+The first overview was criticized because explanatory white text boxes made the
+diagram look cluttered.
+
+The diagram was then cleaned up by:
+- removing large white notes;
+- simplifying labels;
+- removing awkward branch-transition brackets;
+- keeping configuration mismatches as red warning blocks;
+- separating high-level overview information from detailed branch pages.
+
+The resulting Draw.io file contains multiple pages for the overall architecture
+and each branch.
+
+11. TERRAFORM DESTROY / CLEANUP
+-------------------------------
+The user wanted `terraform destroy` to remove as much of the project
+infrastructure as possible.
+
+The desired final behavior includes:
+- EC2 deleted.
+- Terraform-managed root EBS removed.
+- ECR repository deleted together with images.
+- S3 bucket deleted together with objects.
+- CloudWatch Terraform resources deleted.
+- Other Terraform-managed project resources removed.
+
+Required Terraform settings include:
+
+ECR:
+  force_delete = true
+
+S3:
+  force_destroy = true
+
+EC2 root block device:
+  delete_on_termination = true
+
+The user decided NOT to manage the Elastic IP with Terraform for now.
+
+A future Elastic IP will be allocated/associated manually through the AWS UI,
+which means it will also need to be released manually.
+
+12. LOST CODESPACE / TERRAFORM STATE
+------------------------------------
+The user deleted an older Codespace.
+
+This raised the issue that a local Terraform state file may have been lost.
+
+The implications discussed were:
+- Terraform state is normally local unless a remote backend is configured.
+- A new Codespace does not automatically know about resources created using a
+  lost local state.
+- `terraform destroy` cannot reliably destroy resources that are not present in
+  its state.
+- Existing resources may need to be removed manually or imported.
+
+The user confirmed that the previous EC2 instance was already gone.
+
+The remaining resources created by `terraform-automation` were reviewed so
+they could be checked manually:
+- EC2 instance.
+- ECR repository `your-task-website`.
+- S3 bucket `your-website-bucket-<account-id>`.
+
+Bootcamp-managed resources such as the existing IAM profile and security group
+must NOT be deleted.
+
+13. ECR MANUAL CLEANUP
+----------------------
+The user opened the ECR repository and initially could not find the option to
+delete it.
+
+The distinction was explained:
+- the `Images` page deletes individual images;
+- the repository itself must be deleted from the ECR repository list.
+
+The repository was empty at the time.
+
+14. TERRAFORM PLAN BEFORE APPLY
+-------------------------------
+The user proposed a safer workflow:
+- make the desired final changes in `main`;
+- run `terraform plan`;
+- review exactly what Terraform wants to create/change/delete;
+- only then decide whether to run `terraform apply`.
+
+This became the preferred migration approach.
+
+The expected plan should contain the intended infrastructure and must be
+reviewed before apply.
+
+15. FINAL MAIN CONFIGURATION
+----------------------------
+The desired final `main` configuration was defined as follows:
+
+EC2:
+- Amazon Linux 2023.
+- Default instance type: `t3.medium`.
+- 20 GB gp3 root volume.
+- Root volume deleted on termination.
+- Existing bootcamp IAM instance profile.
+- Existing bootcamp Jenkins security group.
+- No Terraform-managed Elastic IP.
+
+Bootstrap:
+- Terraform `user_data`.
+- Clone the `main` branch.
+- Run Ansible automatically.
+
+Ansible:
+- Install/configure Docker.
+- Install/configure Jenkins.
+- Install Node.js/backend dependencies.
+- Configure backend systemd service.
+- Install/configure CloudWatch Agent.
+- Configure fixed board passphrase:
+  `BOARD_SECRET=DevOpsBCTeam2`.
+
+Jenkins:
+- Jenkins Configuration as Code.
+- Job DSL.
+- Automatic pipeline job.
+- Pipeline follows `main`.
+- Build Docker image.
+- Push Docker image to ECR.
+- Run Nginx Docker container on EC2 port 80.
+- Keep S3 website deployment.
+- Run smoke tests.
+- Publish CloudWatch Jenkins metrics.
+
+Terraform-managed AWS resources:
+- EC2.
+- ECR.
+- S3 website resources.
+- CloudWatch alarms/dashboard and related Terraform resources.
+
+Existing/shared resources:
+- Bootcamp IAM instance profile.
+- Bootcamp security group.
+
+These are referenced but are not created or destroyed by the project.
+
+16. T3.MEDIUM CORRECTION
+------------------------
+A significant configuration discrepancy was identified late in the review.
+
+The working `terraform-automation` branch had:
+
+  instance_type = "t3.micro"
+
+However, the desired final `main` configuration should use:
+
+  t3.medium
+
+The user explicitly raised concern that this difference had initially been
+missed.
+
+As a result, the final configuration was changed so that:
+- EC2 uses `var.instance_type`;
+- the default value is `t3.medium`;
+- allowed values may include `t3.micro`, `t3.small`, and `t3.medium`.
+
+This reinforced the decision to review the complete `terraform plan` before
+running `terraform apply`.
+
+17. FUTURE IMPROVEMENTS DOCUMENTATION
+-------------------------------------
+The user requested a large “Future Improvements” section.
+
+Topics included:
+- Remote Terraform state.
+- Full Terraform ownership of infrastructure.
+- Better secret management.
+- GitHub authentication improvements.
+- More secure handling of the board passphrase.
+- DevSecOps scanning.
+- Improved Docker health/rollback behavior.
+- Separation of Jenkins and application infrastructure.
+- CloudFront / improved S3 architecture.
+- More CloudWatch metrics and logging.
+- SNS alerting.
+- GitHub webhook triggering.
+- Development/staging/production environments.
+- Better automated testing.
+- Terraform validation in CI.
+- Fewer hard-coded AWS identifiers.
+- FinOps/cost controls.
+- Better architecture and operations documentation.
+
+
+======================================================================
+OVERALL DIRECTION
+======================================================================
+
+Across these three days, the project moved from a partially manual EC2/Jenkins
+setup toward a reproducible infrastructure-as-code architecture.
+
+The final direction is:
+
+GitHub main
+    |
+    v
+Terraform
+    |
+    +--> EC2 t3.medium
+    |      |
+    |      +--> user_data
+    |              |
+    |              v
+    |           Ansible
+    |              |
+    |              +--> Docker
+    |              +--> Jenkins
+    |              +--> Node.js backend
+    |              +--> CloudWatch Agent
+    |
+    +--> ECR
+    |
+    +--> S3
+    |
+    +--> CloudWatch resources
+
+Jenkins
+    |
+    +--> checkout main
+    +--> Docker build
+    +--> push to ECR
+    +--> run Nginx container on EC2 :80
+    +--> sync static website to S3
+    +--> smoke tests
+    +--> CloudWatch pipeline metrics
+
+Website request flow on EC2:
+
+Browser
+  -> Nginx :80
+  -> /api/requirement
+  -> Node.js backend :3000
+  -> update website/indexKZ.html
+  -> Git commit
+  -> Git push to main
+
+The remaining special concern is GitHub authentication for the backend push.
+The board passphrase `DevOpsBCTeam2` is not a substitute for GitHub
+authentication.
+
+
+END OF SUMMARY
