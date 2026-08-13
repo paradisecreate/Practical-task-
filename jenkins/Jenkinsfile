@@ -16,20 +16,6 @@ pipeline {
             }
         }
 
-        stage('Environment Check') {
-            steps {
-                sh '''
-                    echo "Checking required tools..."
-
-                    aws --version
-                    docker --version
-                    git --version
-
-                    echo "Environment is ready."
-                '''
-            }
-        }
-
         stage('Get AWS Account ID') {
             steps {
                 script {
@@ -38,11 +24,8 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    env.IMAGE =
-                        "${env.ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
-
-                    env.S3_BUCKET =
-                        "your-website-bucket-${env.ACCOUNT_ID}"
+                    env.IMAGE = "${env.ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
+                    env.S3_BUCKET = "your-website-bucket-${env.ACCOUNT_ID}"
 
                     echo "AWS Account ID: ${env.ACCOUNT_ID}"
                     echo "ECR Image: ${env.IMAGE}"
@@ -53,8 +36,6 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo "Building ${IMAGE}:${IMAGE_TAG}..."
-
                 sh '''
                     docker build \
                         -t $IMAGE:$IMAGE_TAG \
@@ -66,12 +47,9 @@ pipeline {
 
         stage('Push to ECR') {
             steps {
-                echo 'Logging in to ECR...'
-
                 sh '''
-                    aws ecr get-login-password \
-                        --region $AWS_REGION \
-                    | docker login \
+                    aws ecr get-login-password --region $AWS_REGION \
+                        | docker login \
                         --username AWS \
                         --password-stdin \
                         $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
@@ -84,12 +62,8 @@ pipeline {
 
         stage('Deploy to S3') {
             steps {
-                echo "Uploading website to s3://${S3_BUCKET}..."
-
                 sh '''
-                    aws s3 sync \
-                        website/ \
-                        s3://$S3_BUCKET/ \
+                    aws s3 sync website/ s3://$S3_BUCKET/ \
                         --delete \
                         --region $AWS_REGION
                 '''
@@ -98,8 +72,6 @@ pipeline {
 
         stage('Verify S3 Deployment') {
             steps {
-                echo 'Checking index.html in S3...'
-
                 sh '''
                     aws s3api head-object \
                         --bucket $S3_BUCKET \
@@ -110,18 +82,9 @@ pipeline {
 
         stage('Website Smoke Test') {
             steps {
-                echo 'Checking public website...'
-
                 sh '''
-                    WEBSITE_URL="http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com/"
-
-                    echo "Testing: $WEBSITE_URL"
-
-                    curl \
-                        --retry 5 \
-                        --retry-delay 3 \
-                        -f \
-                        "$WEBSITE_URL" \
+                    curl -f \
+                        http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com/ \
                         > /dev/null
 
                     echo "Website is UP"

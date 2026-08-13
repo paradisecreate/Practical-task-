@@ -1,11 +1,5 @@
 pipelineJob('practical-task-pipeline') {
 
-    description('Automatically created Practical Task CI/CD pipeline')
-
-    logRotator {
-        numToKeep(10)
-    }
-
     triggers {
         scm('H/2 * * * *')
     }
