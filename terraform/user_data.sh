@@ -1,13 +1,19 @@
 #!/bin/bash
-set -eux
+
+set -euxo pipefail
 
 exec > >(tee /var/log/user-data.log) 2>&1
 
 echo "=== BOOTSTRAP START ==="
 
-dnf install -y git python3-pip
+dnf install -y \
+  git \
+  python3 \
+  python3-pip
 
-pip3 install ansible
+python3 -m pip install \
+  --no-cache-dir \
+  ansible-core
 
 rm -rf /opt/practical-task
 

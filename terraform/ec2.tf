@@ -11,10 +11,16 @@ data "aws_ami" "amazon_linux" {
     name   = "architecture"
     values = ["x86_64"]
   }
-}
 
-data "aws_iam_instance_profile" "bootcamp" {
-  name = "Bootcamp-Instance-Profile"
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
 resource "aws_instance" "jenkins" {
@@ -22,7 +28,7 @@ resource "aws_instance" "jenkins" {
   instance_type = "t3.micro"
 
   vpc_security_group_ids = [
-    "sg-005e05ce419f3ec0d"
+    local.jenkins_security_group_id
   ]
 
   iam_instance_profile = data.aws_iam_instance_profile.bootcamp.name
@@ -34,8 +40,14 @@ resource "aws_instance" "jenkins" {
 
   user_data_replace_on_change = true
 
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+
   tags = {
-    Name = "your-instance"
+    Name    = "your-instance"
+    Project = "practical-task"
   }
 }
 

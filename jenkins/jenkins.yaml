@@ -1,8 +1,6 @@
 jenkins:
   systemMessage: "Practical Task Jenkins"
-
-  authorizationStrategy:
-    unsecured: {}
+  authorizationStrategy: unsecured
 
 unclassified:
   location:
