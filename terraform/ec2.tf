@@ -28,7 +28,7 @@ resource "aws_instance" "jenkins" {
   instance_type = "t3.micro"
 
   vpc_security_group_ids = [
-    aws_security_group.jenkins_sg.id
+    local.jenkins_security_group_id
   ]
 
   iam_instance_profile = data.aws_iam_instance_profile.bootcamp.name
