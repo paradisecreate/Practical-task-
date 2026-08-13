@@ -5,6 +5,7 @@
 
   vars:
     practical_task_repo: "https://github.com/paradisecreate/Practical-task-.git"
+    project_dir: /opt/practical-task
 
   tasks:
     - name: Update Amazon Linux packages
@@ -33,6 +34,44 @@
         dest: /opt/practical-task
         version: main
         force: true
+
+    - name: Install CloudWatch Agent
+      ansible.builtin.dnf:
+        name: amazon-cloudwatch-agent
+        state: present
+
+    - name: Ensure CloudWatch Agent config directory exists
+      ansible.builtin.file:
+        path: /opt/aws/amazon-cloudwatch-agent/etc
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy CloudWatch Agent configuration
+      ansible.builtin.copy:
+        src: "{{ project_dir }}/cloudwatch/amazon-cloudwatch-agent.json"
+        dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Apply CloudWatch Agent configuration
+      ansible.builtin.command:
+        cmd: >
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+          -a fetch-config
+          -m ec2
+          -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+          -s
+      changed_when: true
+
+    - name: Enable CloudWatch Agent
+      ansible.builtin.systemd:
+        name: amazon-cloudwatch-agent
+        enabled: true
+        state: started
 
     - name: Check website directory
       ansible.builtin.stat:
