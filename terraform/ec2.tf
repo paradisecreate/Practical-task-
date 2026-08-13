@@ -36,30 +36,10 @@ resource "aws_instance" "jenkins" {
   user_data                   = file("${path.module}/user_data.sh")
   user_data_replace_on_change = true
 
-  depends_on = [
-    aws_ecr_repository.website,
-    aws_s3_bucket.website,
-    aws_s3_bucket_website_configuration.website
-  ]
-
   tags = {
     Name    = "your-instance"
     Project = "practical-task"
   }
-}
-
-resource "aws_eip" "jenkins" {
-  domain = "vpc"
-
-  tags = {
-    Name    = "your-instance-eip"
-    Project = "practical-task"
-  }
-}
-
-resource "aws_eip_association" "jenkins" {
-  instance_id   = aws_instance.jenkins.id
-  allocation_id = aws_eip.jenkins.id
 }
 
 output "jenkins_instance_id" {
@@ -67,9 +47,9 @@ output "jenkins_instance_id" {
 }
 
 output "jenkins_public_ip" {
-  value = aws_eip.jenkins.public_ip
+  value = aws_instance.jenkins.public_ip
 }
 
 output "jenkins_url" {
-  value = "http://${aws_eip.jenkins.public_ip}:8080"
+  value = "http://${aws_instance.jenkins.public_ip}:8080"
 }
