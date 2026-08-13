@@ -147,8 +147,8 @@ const server = http.createServer((req, res) => {
                 // Sync with the remote first (it may be ahead from other pushes),
                 // so our push isn't rejected as non-fast-forward. Rebase keeps
                 // our new commit on top of any remote changes.
-                await git(['pull', '--rebase', 'origin', 'demo-workflow']);
-                await git(['push', 'origin', 'demo-workflow']);
+                await git(['pull', '--rebase', 'origin', 'main']);
+                await git(['push', 'origin', 'main']);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ ok: true, message: 'Pushed! Jenkins will deploy it shortly.' }));
