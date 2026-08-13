@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team 2 — DevOps Bootcamp Capstone</title>
+    <title>Team 2 – DevOps Bootcamp Capstone</title>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,7 +44,7 @@
         /* Slide area */
         .deck { height: 100%; padding-top: 70px; }
         .slide {
-            display: none; height: 100%; padding: 40px 60px 90px;
+            display: none; height: 100%; padding: 30px 40px 70px;
             overflow-y: auto; background-color: #f7f7fa; animation: fade 0.4s ease;
         }
         .slide.active { display: block; }
@@ -71,16 +71,23 @@
         #slide-0 p { font-size: 19px; max-width: 720px; color: #d4d4d8; line-height: 1.5; }
 
         /* Team cards */
-        .team { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .team { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .member {
-            background-color: white; width: 280px; padding: 24px; border-radius: 6px;
+            background-color: white; padding: 16px 18px; border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid #A100FF;
         }
-        .member h3 { color: #000000; margin-bottom: 4px; }
-        .member .handle { color: #A100FF; font-size: 14px; margin-bottom: 12px; display: block; }
-        .member p { color: #555; line-height: 1.5; }
+        .member h3 { color: #000000; margin-bottom: 4px; font-size: 17px; }
+        .member .handle { color: #A100FF; font-size: 13px; margin-bottom: 8px; display: block; }
+        .member p { color: #555; line-height: 1.4; font-size: 14px; }
         .member.me { border-top-color: #000000; }
         .member.me .handle { color: #000000; }
+        /* Ghost card: faded, dashed, muted grey for non-participant. */
+        .member.ghost {
+            opacity: 0.5; background-color: #f3f4f6;
+            border-top: 5px dashed #9ca3af; box-shadow: none;
+        }
+        .member.ghost h3 { color: #6b7280; }
+        .member.ghost p { color: #9ca3af; }
 
         /* Architecture (mermaid) */
         .diagram {
@@ -144,8 +151,8 @@
             padding: 14px; z-index: 100; border-top: 2px solid #A100FF;
         }
         .controls button {
-            background-color: #A100FF; color: white; border: none; padding: 10px 20px;
-            border-radius: 4px; font-size: 16px; cursor: pointer; font-family: inherit;
+            background-color: #A100FF; color: white; border: none; padding: 4px 8px;
+            border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit;
         }
         .controls button:hover:not(:disabled),
         .controls button:focus { background-color: #7d00c4; outline: 2px solid #d19bff; }
@@ -158,7 +165,7 @@
     <a href="#deck" class="skip-link">Skip to slides</a>
 
     <nav aria-label="Slide navigation">
-        <h2><span class="mark">&gt;</span> Team 2 &mdash; DevOps</h2>
+        <h2><span class="mark">&gt;</span> Team 2 – DevOps</h2>
         <ul>
             <li><button class="navlink" data-goto="0">Home</button></li>
             <li><button class="navlink" data-goto="1">Team</button></li>
@@ -173,7 +180,7 @@
         <section class="slide" id="slide-0" aria-label="Slide 1: Home" role="group">
             <div class="big-mark" aria-hidden="true">&gt;</div>
             <h1>DevOps Bootcamp Capstone</h1>
-            <p class="subtitle">Team 2 &mdash; "It Works on Our Machines"</p>
+            <p class="subtitle">Team 2 – "It Works on Our Machines"</p>
             <p>
                 An end-to-end automated deployment pipeline: from an idea typed on a board,
                 through GitHub and Jenkins, to a live website running on AWS.
@@ -185,37 +192,31 @@
             <div class="slide-inner">
                 <h1 class="slide-title">The Team &amp; Responsibilities</h1>
                 <p class="lead">Six people, one pipeline. Each owned a piece of the stack.</p>
-                <!-- NOTE: roles/handles below are editable — adjust to match reality. -->
+                <!-- NOTE: roles below are editable – adjust to match reality. -->
                 <div class="team">
                     <div class="member">
-                        <h3>Edgars</h3>
-                        <span class="handle">@paradisecreate</span>
-                        <p>Team lead &amp; repository owner. Coordinated the branches and merges.</p>
+                        <h3>Edgars Radzivilcuks</h3>
+                        <p>Terraform (IaC) &amp; repository owner. Provisioned the AWS EC2 instance and coordinated branches and merges.</p>
                     </div>
                     <div class="member">
-                        <h3>Minnu</h3>
-                        <span class="handle">@minnubj</span>
-                        <p>Terraform &mdash; Infrastructure as Code. Provisioned the AWS EC2 instance.</p>
+                        <h3>Minnu Binesh Jiji</h3>
+                        <p>Terraform – EC2 instance creation, plus Docker image creation.</p>
                     </div>
                     <div class="member">
-                        <h3>Nikunj</h3>
-                        <span class="handle">&nbsp;</span>
-                        <p>Docker &amp; containerization. Packaged the website into an image.</p>
-                    </div>
-                    <div class="member me">
-                        <h3>Katrina</h3>
-                        <span class="handle">CI/CD owner</span>
-                        <p>Jenkins pipeline &mdash; build, push to ECR, deploy to EC2 &amp; S3, smoke test.</p>
+                        <h3>Nikunj Patel</h3>
+                        <p>Docker &amp; AMI. Packaged the website into an image and managed the instance.</p>
                     </div>
                     <div class="member">
-                        <h3>Anton</h3>
-                        <span class="handle">&nbsp;</span>
-                        <p>Ansible &mdash; server configuration and package setup.</p>
+                        <h3>Katrina Zabarovska</h3>
+                        <p>Jenkins pipeline – build, push to ECR, deploy to EC2 &amp; S3, smoke test.</p>
                     </div>
                     <div class="member">
-                        <h3>Zlata</h3>
-                        <span class="handle">@HamsterInItsBall</span>
-                        <p>AWS networking &amp; access &mdash; security groups, IAM, connectivity.</p>
+                        <h3>Zlata Litvjakova</h3>
+                        <p>AWS networking &amp; access – security groups, IAM, connectivity.</p>
+                    </div>
+                    <div class="member ghost">
+                        <h3>Anton Chumachenko</h3>
+                        <p>Ansible – server configuration and package setup.</p>
                     </div>
                 </div>
             </div>
@@ -229,10 +230,11 @@
                     <pre class="mermaid">
 flowchart LR
     Dev["Developer / Board"] -->|git push| GH["GitHub Repo"]
-    GH -->|Poll SCM| J["Jenkins Pipeline"]
+    GH -->|webhook| J["Jenkins Pipeline"]
     J --> B["Build Docker Image"]
     B --> ECR[("Amazon ECR")]
-    ECR --> D["Deploy Container<br/>EC2 : port 80"]
+    ECR --> NG["nginx reverse proxy<br/>EC2 : port 80"]
+    NG --> D["Website Container"]
     J --> S3[("Amazon S3<br/>static site")]
     D --> Smoke["Smoke Test<br/>HTTP 200"]
 
@@ -256,22 +258,23 @@ flowchart LR
         <!-- Slide 3: Demo -->
         <section class="slide" id="slide-3" aria-label="Slide 4: Live Demo" role="group">
             <div class="slide-inner">
-                <h1 class="slide-title">Live Demo &mdash; Requirements Board</h1>
+                <h1 class="slide-title">Live Demo – Message Board</h1>
                 <div class="demo-grid">
 
                     <!-- Left: request form -->
                     <div class="demo-col">
-                        <span class="step">Request</span>
-                        <h3>Type a requirement</h3>
+                        <span class="step">Post</span>
+                        <h3>Write a message</h3>
                         <p class="lead" style="font-size:15px;margin:8px 0 14px;">
-                            Submitting pushes it to GitHub. Jenkins then deploys, and the ticket
-                            appears in the board once the site is live.
+                            Submitting pushes your message to GitHub, Jenkins deploys it, and it
+                            appears on the board once the site is live – a single web action runs
+                            the whole pipeline.
                         </p>
                         <form id="demoForm">
                             <div class="field">
-                                <label for="demoReq">New requirement</label>
+                                <label for="demoReq">Your message</label>
                                 <textarea id="demoReq" maxlength="500"
-                                    placeholder="e.g. Add a testimonials section" required></textarea>
+                                    placeholder="e.g. Hello from Team 2!" required></textarea>
                             </div>
                             <div class="field">
                                 <label for="demoSecret">Passphrase</label>
@@ -286,87 +289,11 @@ flowchart LR
                     <!-- Right: board of tickets (server-inserted after deploy) -->
                     <div class="demo-col">
                         <span class="step">Board</span>
-                        <h3>Tickets</h3>
+                        <h3>Messages</h3>
                         <p class="lead" style="font-size:15px;margin:8px 0 14px;">
                             These are live on the deployed site. New ones show up here after Jenkins deploys.
                         </p>
                         <div class="board" id="board">
-                                                <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 2</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test mobile</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>git webhook test</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test for 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test for 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test for 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test for 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test for 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 13-8-2026</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>123</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>1234</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>Toms te bija</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test 13:44</p>
-                    </div>
-                                        <div class="ticket">
-                        <span class="ticket-tag">Requirement</span>
-                        <p>test main 13:59</p>
-                    </div>
                     <!-- new-cards -->
                         </div>
                     </div>
@@ -391,8 +318,15 @@ flowchart LR
         (function () {
             if (window.mermaid) {
                 mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: { primaryColor: '#f2e6ff', primaryBorderColor: '#A100FF', primaryTextColor: '#000000', lineColor: '#A100FF', fontFamily: 'Segoe UI, Arial, sans-serif' } });
-                // Render explicitly — startOnLoad is unreliable when the
-                // diagram's slide is hidden (display:none) at load time.
+            }
+
+            // Render the diagram only once, and only when its slide is actually
+            // visible. Running mermaid while the slide is display:none produces
+            // "translate(undefined, NaN)" because the SVG can't be measured.
+            let mermaidRendered = false;
+            function renderMermaid() {
+                if (mermaidRendered || !window.mermaid) { return; }
+                mermaidRendered = true;
                 mermaid.run({ querySelector: '.mermaid' }).catch(function () { /* offline: CDN unreachable */ });
             }
 
@@ -412,6 +346,9 @@ flowchart LR
                 counter.textContent = (current + 1) + ' / ' + total;
                 prevBtn.disabled = (current === 0);
                 nextBtn.disabled = (current === total - 1);
+                // Slide index 2 is the Architecture diagram – render it now that
+                // it's visible (first time only).
+                if (current === 2) { renderMermaid(); }
             }
 
             prevBtn.addEventListener('click', () => show(current - 1));
@@ -453,9 +390,9 @@ flowchart LR
                         body: JSON.stringify({ requirement: text })
                     });
                     const data = await res.json();
-                    // The ticket is NOT shown here. It appears on the board only
+                    // The card is NOT shown here. It appears on the board only
                     // after Jenkins deploys the pushed change and the page reloads.
-                    if (data.ok) { setStatus('Pushed! Jenkins is deploying \u2014 reload after it finishes to see the ticket.', true); req.value = ''; }
+                    if (data.ok) { setStatus('Pushed! Jenkins is deploying \u2013 reload after it finishes to see your message.', true); req.value = ''; }
                     else { setStatus('Error: ' + (data.error || 'unknown'), false); }
                 } catch (err) {
                     setStatus('Could not reach the backend. Is server.js running?', false);
