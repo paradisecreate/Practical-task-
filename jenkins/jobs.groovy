@@ -1,6 +1,10 @@
 pipelineJob('practical-task-pipeline') {
 
     triggers {
+        // GitHub webhook
+        githubPush()
+
+        // Fallback while webhook is not configured yet
         scm('H/2 * * * *')
     }
 

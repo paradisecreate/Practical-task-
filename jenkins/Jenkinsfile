@@ -3,8 +3,9 @@ pipeline {
 
     environment {
         AWS_REGION = 'eu-west-1'
-        ECR_REPO = 'your-task-website'
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        ECR_REPO   = 'your-task-website'
+        IMAGE_TAG  = "${BUILD_NUMBER}"
+        CONTAINER  = 'practical-task-website'
     }
 
     stages {
@@ -24,8 +25,11 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    env.IMAGE = "${env.ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
-                    env.S3_BUCKET = "your-website-bucket-${env.ACCOUNT_ID}"
+                    env.IMAGE =
+                        "${env.ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
+
+                    env.S3_BUCKET =
+                        "your-website-bucket-${env.ACCOUNT_ID}"
 
                     echo "AWS Account ID: ${env.ACCOUNT_ID}"
                     echo "ECR Image: ${env.IMAGE}"
@@ -36,7 +40,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image..."
+                echo "Building ${IMAGE}:${IMAGE_TAG}..."
 
                 sh '''
                     docker build \
@@ -49,7 +53,7 @@ pipeline {
 
         stage('Push to ECR') {
             steps {
-                echo 'Pushing image to ECR...'
+                echo 'Logging in to ECR and pushing image...'
 
                 sh '''
                     aws ecr get-login-password \
@@ -65,9 +69,26 @@ pipeline {
             }
         }
 
+        stage('Deploy Container') {
+            steps {
+                echo 'Deploying website container to EC2...'
+
+                sh '''
+                    docker rm -f $CONTAINER || true
+
+                    docker run -d \
+                        --name $CONTAINER \
+                        --restart unless-stopped \
+                        --add-host=host.docker.internal:host-gateway \
+                        -p 80:80 \
+                        $IMAGE:$IMAGE_TAG
+                '''
+            }
+        }
+
         stage('Deploy to S3') {
             steps {
-                echo 'Deploying website to S3...'
+                echo "Deploying static website to S3..."
 
                 sh '''
                     aws s3 sync \
@@ -75,6 +96,39 @@ pipeline {
                         s3://$S3_BUCKET/ \
                         --delete \
                         --region $AWS_REGION
+                '''
+            }
+        }
+
+        stage('Verify Backend') {
+            steps {
+                echo 'Checking server.js...'
+
+                sh '''
+                    curl \
+                        --retry 5 \
+                        --retry-delay 2 \
+                        -f \
+                        http://localhost:3000/health
+
+                    echo "Backend is UP"
+                '''
+            }
+        }
+
+        stage('EC2 Website Smoke Test') {
+            steps {
+                echo 'Checking nginx container...'
+
+                sh '''
+                    curl \
+                        --retry 5 \
+                        --retry-delay 3 \
+                        -f \
+                        http://localhost:80/ \
+                        > /dev/null
+
+                    echo "EC2 website is UP"
                 '''
             }
         }
@@ -89,7 +143,7 @@ pipeline {
             }
         }
 
-        stage('Website Smoke Test') {
+        stage('S3 Smoke Test') {
             steps {
                 sh '''
                     curl \
@@ -99,7 +153,7 @@ pipeline {
                         http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com/ \
                         > /dev/null
 
-                    echo "Website is UP"
+                    echo "S3 website is UP"
                 '''
             }
         }
@@ -107,11 +161,11 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline finished successfully.'
+            echo 'Pipeline finished: deployment succeeded.'
         }
 
         failure {
-            echo 'Pipeline failed. Check the failed stage.'
+            echo 'Pipeline FAILED: check the failed stage.'
         }
     }
 }

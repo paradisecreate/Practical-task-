@@ -23,6 +23,7 @@
           - fontconfig
           - java-21-amazon-corretto
           - docker
+          - nodejs
         state: present
 
     # --------------------------------------------------
@@ -125,6 +126,7 @@
           - job-dsl
           - workflow-aggregator
           - git
+          - github
 
     - name: Set Jenkins plugins ownership
       ansible.builtin.file:
@@ -174,19 +176,121 @@
           Environment="JAVA_OPTS=-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Xmx256m -Djava.io.tmpdir=/var/lib/jenkins/tmp"
           Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/casc/jenkins.yaml"
 
+    # --------------------------------------------------
+    # Requirements Board backend
+    # --------------------------------------------------
+
+    - name: Give Jenkins ownership of project repository
+      ansible.builtin.file:
+        path: "{{ project_dir }}"
+        owner: jenkins
+        group: jenkins
+        recurse: true
+
+    - name: Configure Git username for board backend
+      ansible.builtin.command:
+        argv:
+          - git
+          - -C
+          - "{{ project_dir }}"
+          - config
+          - user.name
+          - "Practical Task Board"
+      become_user: jenkins
+      changed_when: false
+
+    - name: Configure Git email for board backend
+      ansible.builtin.command:
+        argv:
+          - git
+          - -C
+          - "{{ project_dir }}"
+          - config
+          - user.email
+          - "practical-task-board@localhost"
+      become_user: jenkins
+      changed_when: false
+
+    - name: Configure Git credential helper
+      ansible.builtin.command:
+        argv:
+          - git
+          - config
+          - --global
+          - credential.helper
+          - store
+      become_user: jenkins
+      environment:
+        HOME: /var/lib/jenkins
+      changed_when: false
+
+    - name: Create board secret
+      ansible.builtin.shell: |
+        printf 'BOARD_SECRET=%s\n' \
+          "$(python3 -c 'import secrets; print(secrets.token_urlsafe(18))')" \
+          > /etc/practical-task-board.env
+        chmod 600 /etc/practical-task-board.env
+      args:
+        creates: /etc/practical-task-board.env
+
+    - name: Create backend systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/practical-task-backend.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Practical Task Requirements Board Backend
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          Type=simple
+          User=jenkins
+          Group=jenkins
+          WorkingDirectory=/opt/practical-task
+          EnvironmentFile=/etc/practical-task-board.env
+          Environment="GIT_BRANCH=terraform-automation"
+          Environment="HOME=/var/lib/jenkins"
+          ExecStart=/usr/bin/node /opt/practical-task/server.js
+          Restart=always
+          RestartSec=3
+
+          [Install]
+          WantedBy=multi-user.target
+
+    # --------------------------------------------------
+    # Start services
+    # --------------------------------------------------
+
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: true
 
-    # --------------------------------------------------
-    # Start Jenkins
-    # --------------------------------------------------
+    - name: Enable and start backend
+      ansible.builtin.systemd:
+        name: practical-task-backend
+        enabled: true
+        state: started
 
     - name: Enable and start Jenkins
       ansible.builtin.systemd:
         name: jenkins
         enabled: true
         state: started
+
+    # --------------------------------------------------
+    # Verify backend
+    # --------------------------------------------------
+
+    - name: Wait for board backend
+      ansible.builtin.uri:
+        url: http://localhost:3000/health
+        status_code: 200
+        timeout: 5
+      register: backend_status
+      until: backend_status.status == 200
+      retries: 20
+      delay: 3
 
     # --------------------------------------------------
     # Verify Jenkins
@@ -203,10 +307,6 @@
       until: jenkins_status.status in [200, 403]
       retries: 40
       delay: 5
-
-    # --------------------------------------------------
-    # Verify automatic pipeline creation
-    # --------------------------------------------------
 
     - name: Wait for practical task pipeline
       ansible.builtin.uri:
@@ -230,6 +330,16 @@
     - name: Verify Jenkins is active
       ansible.builtin.command:
         cmd: systemctl is-active jenkins
+      changed_when: false
+
+    - name: Verify backend is active
+      ansible.builtin.command:
+        cmd: systemctl is-active practical-task-backend
+      changed_when: false
+
+    - name: Verify Node.js
+      ansible.builtin.command:
+        cmd: node --version
       changed_when: false
 
     - name: Verify AWS CLI
