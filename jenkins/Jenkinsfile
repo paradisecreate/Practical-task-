@@ -75,6 +75,20 @@ pipeline {
                 '''
             }
         }
+
+        stage('Website Smoke Test') {
+            steps {
+                echo 'Checking public website...'
+
+                sh '''
+                    curl -f \
+                        http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com/ \
+                        > /dev/null
+
+                    echo "Website is UP"
+                '''
+            }
+        }
     }
 
     post {
