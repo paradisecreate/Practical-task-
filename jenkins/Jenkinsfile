@@ -3,14 +3,8 @@ pipeline {
 
     environment {
         AWS_REGION = 'eu-west-1'
-        ACCOUNT_ID = '499210847987'
-
         ECR_REPO = 'your-task-website'
-
-        IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
         IMAGE_TAG = "${BUILD_NUMBER}"
-
-        S3_BUCKET = "your-website-bucket-${ACCOUNT_ID}"
     }
 
     stages {
@@ -19,6 +13,24 @@ pipeline {
             steps {
                 echo 'Getting code from GitHub...'
                 checkout scm
+            }
+        }
+
+        stage('Get AWS Account ID') {
+            steps {
+                script {
+                    env.ACCOUNT_ID = sh(
+                        script: 'aws sts get-caller-identity --query Account --output text',
+                        returnStdout: true
+                    ).trim()
+
+                    env.IMAGE = "${env.ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
+                    env.S3_BUCKET = "your-website-bucket-${env.ACCOUNT_ID}"
+
+                    echo "AWS Account ID: ${env.ACCOUNT_ID}"
+                    echo "ECR Image: ${env.IMAGE}"
+                    echo "S3 Bucket: ${env.S3_BUCKET}"
+                }
             }
         }
 
