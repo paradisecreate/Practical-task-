@@ -1,15 +1,9 @@
 jenkins:
   systemMessage: "Practical Task Jenkins"
 
-  securityRealm:
-    none
+  numExecutors: 1
 
-  authorizationStrategy:
-    unsecured: {}
-
-unclassified:
-  location:
-    url: "http://localhost:8080/"
+  authorizationStrategy: unsecured
 
 jobs:
   - file: /var/lib/jenkins/casc/jobs.groovy
