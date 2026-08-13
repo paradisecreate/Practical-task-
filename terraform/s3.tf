@@ -1,13 +1,9 @@
-data "aws_caller_identity" "current" {}
-
 resource "aws_s3_bucket" "website" {
-  bucket        = "your-website-bucket-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true
+  bucket = "your-website-bucket-${data.aws_caller_identity.current.account_id}"
 
   tags = {
-    Name        = "your-website-bucket"
-    Environment = "dev"
-    ManagedBy   = "Terraform"
+    Name    = "Practical Task Website"
+    Project = "practical-task"
   }
 }
 
@@ -26,10 +22,6 @@ resource "aws_s3_bucket_website_configuration" "website" {
   index_document {
     suffix = "index.html"
   }
-
-  error_document {
-    key = "index.html"
-  }
 }
 
 resource "aws_s3_bucket_policy" "website" {
@@ -47,15 +39,20 @@ resource "aws_s3_bucket_policy" "website" {
         Sid       = "PublicReadGetObject"
         Effect    = "Allow"
         Principal = "*"
-
-        Action = [
-          "s3:GetObject"
-        ]
-
-        Resource = "${aws_s3_bucket.website.arn}/*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.website.arn}/*"
       }
     ]
   })
+}
+
+resource "aws_s3_object" "index" {
+  bucket       = aws_s3_bucket.website.id
+  key          = "index.html"
+  source       = "${path.module}/../website/index.html"
+  content_type = "text/html"
+
+  etag = filemd5("${path.module}/../website/index.html")
 }
 
 output "website_bucket_name" {

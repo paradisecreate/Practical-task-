@@ -1,0 +1,9 @@
+{
+    "MFADevices": [
+        {
+            "UserName": "DevEdgarsRadzivilcuks",
+            "SerialNumber": "arn:aws:iam::597765856364:mfa/DevEdgarsRadzivilcuksMFA",
+            "EnableDate": "2026-08-04T08:50:05+00:00"
+        }
+    ]
+}

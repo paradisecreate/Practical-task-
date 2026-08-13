@@ -1,26 +1,29 @@
 #!/bin/bash
+
 set -e
 
-echo "===== Starting EC2 bootstrap ====="
-
-# Install Git and Ansible
 dnf update -y
-dnf install -y git ansible
 
-# Move to /opt
-cd /opt
+# Install required packages
+dnf install -y git java-21-amazon-corretto wget
 
-# Clone the automation branch
-git clone \
-  --branch terraform-automation \
-  --single-branch \
-  https://github.com/paradisecreate/Practical-task-.git \
-  bootstrap-repo
+# Install Docker
+dnf install -y docker
 
-# Enter the repository we just cloned
-cd /opt/bootstrap-repo
+systemctl enable docker
+systemctl start docker
 
-# Run the Ansible playbook
-ansible-playbook ansible/playbook.yml
+# Install Jenkins repository
+wget -O /etc/yum.repos.d/jenkins.repo \
+  https://pkg.jenkins.io/rpm-stable/jenkins.repo
 
-echo "===== EC2 bootstrap completed ====="
+rpm --import https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key
+
+# Install Jenkins
+dnf install -y jenkins
+
+# Allow Jenkins to use Docker
+usermod -aG docker jenkins
+
+systemctl enable jenkins
+systemctl start jenkins

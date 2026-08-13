@@ -8,55 +8,47 @@ data "aws_ami" "amazon_linux" {
   }
 
   filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
     name   = "architecture"
     values = ["x86_64"]
   }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
-resource "aws_instance" "devops_server" {
+resource "aws_instance" "jenkins" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
 
-  iam_instance_profile = aws_iam_instance_profile.jenkins.name
-
   vpc_security_group_ids = [
-    aws_security_group.jenkins.id
+    aws_security_group.jenkins_sg.id
   ]
 
-  user_data                   = file("${path.module}/user_data.sh")
-  user_data_replace_on_change = true
+  iam_instance_profile = data.aws_iam_instance_profile.bootcamp.name
 
-  root_block_device {
-    volume_size = 20
-    volume_type = "gp3"
-  }
+  user_data = file("${path.module}/user_data.sh")
 
   tags = {
-    Name      = "Your Instance"
-    ManagedBy = "Terraform"
+    Name    = "jenkins-server"
+    Project = "practical-task"
   }
 }
 
-resource "aws_eip" "devops_server_eip" {
-  domain = "vpc"
-
-  tags = {
-    Name      = "Your Instance-eip"
-    ManagedBy = "Terraform"
-  }
+output "jenkins_instance_id" {
+  value = aws_instance.jenkins.id
 }
 
-resource "aws_eip_association" "devops_server_eip_assoc" {
-  instance_id   = aws_instance.devops_server.id
-  allocation_id = aws_eip.devops_server_eip.id
+output "jenkins_public_ip" {
+  value = aws_instance.jenkins.public_ip
 }
 
-output "devops_server_public_ip" {
-  description = "Static public IP of the Jenkins EC2 server"
-  value       = aws_eip.devops_server_eip.public_ip
+output "jenkins_url" {
+  value = "http://${aws_instance.jenkins.public_ip}:8080"
 }

@@ -2,13 +2,13 @@ data "aws_vpc" "default" {
   default = true
 }
 
-resource "aws_security_group" "jenkins" {
+resource "aws_security_group" "jenkins_sg" {
   name        = "jenkins-security-group"
-  description = "Security group for Practical Task Jenkins server"
+  description = "Security group for Jenkins EC2 instance"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "Jenkins Web UI"
+    description = "Jenkins"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
@@ -16,7 +16,7 @@ resource "aws_security_group" "jenkins" {
   }
 
   egress {
-    description = "Allow outbound traffic"
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -24,7 +24,7 @@ resource "aws_security_group" "jenkins" {
   }
 
   tags = {
-    Name      = "jenkins-security-group"
-    ManagedBy = "Terraform"
+    Name    = "jenkins-security-group"
+    Project = "practical-task"
   }
 }
