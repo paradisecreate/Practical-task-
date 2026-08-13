@@ -279,3 +279,4 @@ Finally, the project documentation itself should continue evolving together with
 
 Overall, the current implementation already demonstrates the complete DevOps lifecycle: infrastructure provisioning with Terraform, server configuration with Ansible, CI/CD automation with Jenkins, containerization with Docker, image storage in Amazon ECR, deployment to EC2 and S3, application interaction with GitHub, and infrastructure monitoring through Amazon CloudWatch. The next stage of development would therefore focus less on adding isolated tools and more on improving reliability, security, state management, observability, portability, and automation. These improvements would gradually transform the bootcamp solution into an architecture that more closely resembles a real production DevOps environment.
 
+To check out some of the changes partially implemented, see the "terraform-automation" branch
