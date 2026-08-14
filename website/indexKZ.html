@@ -130,6 +130,9 @@
         #demoStatus.ok { display: block; background: #f2e6ff; color: #5a00a0; }
         #demoStatus.err { display: block; background: #fee2e2; color: #991b1b; }
         .demo-col ol { margin: 10px 0 0 18px; color: #555; line-height: 1.7; }
+        .col-head { color: #A100FF; font-size: 18px; margin-bottom: 12px; }
+        .bullets { margin: 0 0 0 18px; color: #333; line-height: 1.8; }
+        .bullets li { margin-bottom: 10px; }
 
         /* Board of tickets (right column) */
         .board { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
@@ -171,6 +174,8 @@
             <li><button class="navlink" data-goto="1">Team</button></li>
             <li><button class="navlink" data-goto="2">Architecture</button></li>
             <li><button class="navlink" data-goto="3">Demo</button></li>
+            <li><button class="navlink" data-goto="4">Lessons</button></li>
+            <li><button class="navlink" data-goto="5">Thank You</button></li>
         </ul>
     </nav>
 
@@ -316,6 +321,41 @@ flowchart LR
 
                 </div>
             </div>
+        </section>
+
+        <!-- Slide 4: Lessons Learned & Future Improvements -->
+        <section class="slide" id="slide-4" aria-label="Slide 5: Lessons Learned and Future Improvements" role="group">
+            <div class="slide-inner">
+                <h1 class="slide-title">Lessons Learned &amp; Future Improvements</h1>
+                <div class="demo-grid">
+                    <div class="demo-col">
+                        <h2 class="col-head">What we learned</h2>
+                        <ul class="bullets">
+                            <li>A stable public IP (Elastic IP) is essential – webhooks break the moment the address changes.</li>
+                            <li>Corporate networks block non-standard ports, so ports 80 and 8080 shaped the whole design.</li>
+                            <li>Fail-closed secrets and constant-time checks keep the board endpoint safe.</li>
+                            <li>Small, clear commits made the Jenkins auto-deploy easy to trust and debug.</li>
+                        </ul>
+                    </div>
+                    <div class="demo-col">
+                        <h2 class="col-head">Where we go next</h2>
+                        <ul class="bullets">
+                            <li>Swap the GitHub webhook for HTTPS behind the reverse proxy.</li>
+                            <li>Add automated tests to the Jenkins pipeline before deploy.</li>
+                            <li>Move secrets into AWS Secrets Manager instead of env files.</li>
+                            <li>Scale the site to zero when idle to cut idle infrastructure cost.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Thank You -->
+        <section class="slide" id="slide-5" aria-label="Slide 6: Thank You" role="group">
+            <div class="big-mark" aria-hidden="true">&gt;</div>
+            <h1>Thank You</h1>
+            <p class="subtitle">Team 2 – "It Works on Our Machines"</p>
+            <p>Questions welcome – and feel free to post one on the live board.</p>
         </section>
 
     </div>
