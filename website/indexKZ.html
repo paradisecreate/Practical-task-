@@ -59,16 +59,16 @@
         .lead { font-size: 18px; line-height: 1.6; margin-bottom: 25px; color: #333; }
 
         /* Title slide */
-        #slide-0 {
+        #slide-0, #slide-5 {
             display: none; flex-direction: column; justify-content: center;
             align-items: center; text-align: center;
             background: #000000; color: #fff;
         }
-        #slide-0.active { display: flex; }
-        #slide-0 .big-mark { font-size: 90px; color: #A100FF; font-weight: 700; line-height: 1; margin-bottom: 10px; }
-        #slide-0 h1 { font-size: 46px; margin-bottom: 16px; color: #ffffff; border: none; font-weight: 600; }
-        #slide-0 .subtitle { font-size: 22px; color: #A100FF; font-weight: bold; margin-bottom: 20px; }
-        #slide-0 p { font-size: 19px; max-width: 720px; color: #d4d4d8; line-height: 1.5; }
+        #slide-0.active, #slide-5.active { display: flex; }
+        #slide-0 .big-mark, #slide-5 .big-mark { font-size: 90px; color: #A100FF; font-weight: 700; line-height: 1; margin-bottom: 10px; }
+        #slide-0 h1, #slide-5 h1 { font-size: 46px; margin-bottom: 16px; color: #ffffff; border: none; font-weight: 600; }
+        #slide-0 .subtitle, #slide-5 .subtitle { font-size: 22px; color: #A100FF; font-weight: bold; margin-bottom: 20px; }
+        #slide-0 p, #slide-5 p { font-size: 19px; max-width: 720px; color: #d4d4d8; line-height: 1.5; }
 
         /* Team cards */
         .team { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -330,21 +330,9 @@ flowchart LR
                 <div class="demo-grid">
                     <div class="demo-col">
                         <h2 class="col-head">What we learned</h2>
-                        <ul class="bullets">
-                            <li>A stable public IP (Elastic IP) is essential – webhooks break the moment the address changes.</li>
-                            <li>Corporate networks block non-standard ports, so ports 80 and 8080 shaped the whole design.</li>
-                            <li>Fail-closed secrets and constant-time checks keep the board endpoint safe.</li>
-                            <li>Small, clear commits made the Jenkins auto-deploy easy to trust and debug.</li>
-                        </ul>
                     </div>
                     <div class="demo-col">
                         <h2 class="col-head">Where we go next</h2>
-                        <ul class="bullets">
-                            <li>Swap the GitHub webhook for HTTPS behind the reverse proxy.</li>
-                            <li>Add automated tests to the Jenkins pipeline before deploy.</li>
-                            <li>Move secrets into AWS Secrets Manager instead of env files.</li>
-                            <li>Scale the site to zero when idle to cut idle infrastructure cost.</li>
-                        </ul>
                     </div>
                 </div>
             </div>
