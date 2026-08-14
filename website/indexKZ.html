@@ -130,9 +130,17 @@
         #demoStatus.ok { display: block; background: #f2e6ff; color: #5a00a0; }
         #demoStatus.err { display: block; background: #fee2e2; color: #991b1b; }
         .demo-col ol { margin: 10px 0 0 18px; color: #555; line-height: 1.7; }
-        .col-head { color: #A100FF; font-size: 18px; margin-bottom: 12px; }
-        .bullets { margin: 0 0 0 18px; color: #333; line-height: 1.8; }
-        .bullets li { margin-bottom: 10px; }
+
+        /* Lessons slide: centered dark, matches the Thank You slide */
+        #slide-4 {
+            display: none; flex-direction: column; justify-content: center;
+            align-items: center; text-align: center;
+            background: #000000; color: #fff;
+        }
+        #slide-4.active { display: flex; }
+        #slide-4 .slide-title { color: #ffffff; border: none; }
+        #slide-4 .lessons-heads { display: flex; gap: 80px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+        #slide-4 .col-head { color: #A100FF; font-size: 28px; margin: 0; }
 
         /* Board of tickets (right column) */
         .board { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
@@ -325,16 +333,10 @@ flowchart LR
 
         <!-- Slide 4: Lessons Learned & Future Improvements -->
         <section class="slide" id="slide-4" aria-label="Slide 5: Lessons Learned and Future Improvements" role="group">
-            <div class="slide-inner">
-                <h1 class="slide-title">Lessons Learned &amp; Future Improvements</h1>
-                <div class="demo-grid">
-                    <div class="demo-col">
-                        <h2 class="col-head">What we learned</h2>
-                    </div>
-                    <div class="demo-col">
-                        <h2 class="col-head">Where we go next</h2>
-                    </div>
-                </div>
+            <h1 class="slide-title">Lessons Learned &amp; Future Improvements</h1>
+            <div class="lessons-heads">
+                <h2 class="col-head">What can be improved</h2>
+                <h2 class="col-head">What we learned</h2>
             </div>
         </section>
 
@@ -342,8 +344,7 @@ flowchart LR
         <section class="slide" id="slide-5" aria-label="Slide 6: Thank You" role="group">
             <div class="big-mark" aria-hidden="true">&gt;</div>
             <h1>Thank You</h1>
-            <p class="subtitle">Team 2 – "It Works on Our Machines"</p>
-            <p>Questions welcome – and feel free to post one on the live board.</p>
+            <p>Questions welcome.</p>
         </section>
 
     </div>
